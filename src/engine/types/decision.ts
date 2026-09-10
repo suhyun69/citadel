@@ -10,7 +10,12 @@ import type { CardId, PlayerId } from './ids';
  */
 export type MainAction =
   | { readonly t: 'build'; readonly card: CardId }
-  | { readonly t: 'useAbility' }
+  /**
+   * 캐릭터 능력. `ability` 는 카드가 스스로 정의하는 키다 — 한 캐릭터가 능력을
+   * 둘 이상 가질 수 있기 때문에 필요하다(장군은 수입과 파괴가 별개다).
+   * 충돌을 막기 위해 `'warlord.destroy'` 처럼 카드 이름을 앞에 붙인다.
+   */
+  | { readonly t: 'useAbility'; readonly ability: string }
   | { readonly t: 'useBuilding'; readonly building: UniqueBuildingId }
   | { readonly t: 'endTurn' };
 

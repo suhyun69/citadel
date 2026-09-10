@@ -76,9 +76,11 @@ export interface TurnState {
   buildLimit: number;
   /** 자원 얻기로 뽑아서 아직 고르지 않은 카드 */
   drawn: CardId[] | null;
-  abilityUsed: boolean;
-  /** 차례당 1회 제한이 있는 건물(실험실/대장간)의 사용 기록 */
-  usedOncePerTurn: UniqueBuildingId[];
+  /**
+   * 이번 차례에 이미 쓴 능력 키. 캐릭터 능력과 "차례마다 한 번" 건물
+   * (실험실·대장간)을 같은 방식으로 다룬다.
+   */
+  usedAbilities: string[];
 }
 
 export interface ActionPhaseState {

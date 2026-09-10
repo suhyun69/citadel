@@ -16,6 +16,11 @@ import {
   keepDrawnPending,
   mainActionPending,
 } from './phases/turn';
+import {
+  resolveMagicianMode,
+  resolveNamedCharacter,
+  resolveWarlordTarget,
+} from './effects/resolvers';
 import { isLegal } from './query';
 import type { AnyChoice } from './types/decision';
 import type { GameState } from './types/state';
@@ -127,6 +132,15 @@ export function applyChoice(state: GameState, choice: AnyChoice): GameState {
         return;
       case 'mainAction':
         applyMainAction(s, choice.action);
+        return;
+      case 'namedCharacter':
+        resolveNamedCharacter(s, (pending as { purpose: 'assassinate' | 'rob' }).purpose, choice.characterId);
+        return;
+      case 'magicianMode':
+        resolveMagicianMode(s, pending.player, choice);
+        return;
+      case 'warlordTarget':
+        resolveWarlordTarget(s, pending.player, choice.target);
         return;
       default:
         throw new Error(`아직 처리하지 않는 선택입니다: ${choice.type}`);

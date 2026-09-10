@@ -3,13 +3,30 @@ import { defIdOf } from '../types/ids';
 import type { PlayerId } from '../types/ids';
 import type { GameState } from '../types/state';
 import type { GameHooks, HookSource } from './hooks';
+import { architect } from './characters/architect';
+import { assassin } from './characters/assassin';
+import { bishop } from './characters/bishop';
+import { king } from './characters/king';
+import { magician } from './characters/magician';
+import { merchant } from './characters/merchant';
+import { thief } from './characters/thief';
+import { warlord } from './characters/warlord';
 
 /**
  * 구현된 카드 효과만 등록한다. `Partial<Record<…>>` 인 것이 중요하다 —
  * 전체 카드를 한 번에 만들지 않으므로, 미구현 카드는 여기 없고
  * `missingCards()` 가 그것을 프리셋 단위로 알려준다.
  */
-export const CHARACTER_EFFECTS: Partial<Record<CharacterId, GameHooks>> = {};
+export const CHARACTER_EFFECTS: Partial<Record<CharacterId, GameHooks>> = {
+  assassin,
+  thief,
+  magician,
+  king,
+  bishop,
+  merchant,
+  architect,
+  warlord,
+};
 
 export const BUILDING_EFFECTS: Partial<Record<UniqueBuildingId, GameHooks>> = {};
 

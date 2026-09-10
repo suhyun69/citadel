@@ -5,6 +5,7 @@ function sameAction(a: MainAction, b: MainAction): boolean {
   if (a.t !== b.t) return false;
   if (a.t === 'build' && b.t === 'build') return a.card === b.card;
   if (a.t === 'useBuilding' && b.t === 'useBuilding') return a.building === b.building;
+  if (a.t === 'useAbility' && b.t === 'useAbility') return a.ability === b.ability;
   return true;
 }
 

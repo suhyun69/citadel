@@ -49,8 +49,7 @@ export function startTurn(state: GameState, player: PlayerId, characterId: impor
     buildsUsed: 0,
     buildLimit: buildLimitFor(state, player),
     drawn: null,
-    abilityUsed: false,
-    usedOncePerTurn: [],
+    usedAbilities: [],
   } satisfies TurnState;
 
   const ctx = makeCtx(state, player);
@@ -195,13 +194,14 @@ export function applyMainAction(state: GameState, action: MainAction): void {
       const ctx = makeCtx(state, turn.playerId);
       let handled = false;
       for (const h of collectHooks(state, turn.playerId)) {
-        if (h.performAction) {
-          h.performAction(action, ctx);
+        if (h.performAction?.(action, ctx)) {
           handled = true;
+          break;
         }
       }
       if (!handled) {
-        const what = action.t === 'useBuilding' ? buildingDef(action.building).title : '캐릭터 능력';
+        const what =
+          action.t === 'useBuilding' ? buildingDef(action.building).title : action.ability;
         throw new Error(`처리할 수 없는 행동입니다: ${what}`);
       }
       return;

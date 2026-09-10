@@ -56,8 +56,11 @@ export interface GameHooks {
   immuneToRank8?(entry: CityEntry, ctx: EffectCtx): boolean;
   /** 차례 메뉴에 노출할 행동 */
   turnActions?(ctx: EffectCtx): MainAction[];
-  /** 위에서 고른 행동 실행 */
-  performAction?(action: MainAction, ctx: EffectCtx): void;
+  /**
+   * 위에서 고른 행동 실행. **자기가 처리한 경우에만 true** 를 돌려준다.
+   * 모든 훅에 물어보므로, 남의 능력 키는 false 로 흘려보내야 한다.
+   */
+  performAction?(action: MainAction, ctx: EffectCtx): boolean;
   /** 왕: 왕관 획득(강제) */
   onTurnStart?(ctx: EffectCtx): void;
   /** 암살당한 왕의 왕관 계승 */

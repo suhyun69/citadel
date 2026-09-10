@@ -19,6 +19,12 @@ export interface EffectCtx {
 export interface ScoreCtx {
   readonly state: GameState;
   readonly self: PlayerId;
+  /**
+   * 유령 지구를 어떤 종류로 쓰기로 했는지. null 이면 원래대로 특수 건물이다.
+   * 소원의 우물은 이걸 봐야 한다 — 유령 지구를 다른 종류로 쓰면 더 이상
+   * 특수 건물이 아니라서 점수에서 빠진다(howto.md 건물 상세 설명).
+   */
+  readonly wildcardAs: BuildingKind | null;
 }
 
 export interface PaymentOption {

@@ -2,6 +2,7 @@ import type { PendingDecision } from '../types/decision';
 import type { GameEvent } from '../types/event';
 import type { PlayerId } from '../types/ids';
 import type { GameState } from '../types/state';
+import type { BuildingKind } from '@/data/types';
 import type { EffectCtx, ScoreCtx } from './hooks';
 
 export function makeCtx(state: GameState, self: PlayerId): EffectCtx {
@@ -19,4 +20,8 @@ export function makeCtx(state: GameState, self: PlayerId): EffectCtx {
   };
 }
 
-export const makeScoreCtx = (state: GameState, self: PlayerId): ScoreCtx => ({ state, self });
+export const makeScoreCtx = (
+  state: GameState,
+  self: PlayerId,
+  wildcardAs: BuildingKind | null = null,
+): ScoreCtx => ({ state, self, wildcardAs });

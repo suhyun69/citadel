@@ -17,12 +17,16 @@ import {
   mainActionPending,
 } from './phases/turn';
 import {
+  resolveBuildPayment,
+  resolveDiscardCard,
   resolveMagicianMode,
   resolveNamedCharacter,
   resolveWarlordTarget,
 } from './effects/resolvers';
 import { isLegal } from './query';
+import type { UniqueBuildingId } from '@/data/types';
 import type { AnyChoice } from './types/decision';
+import type { CardId } from './types/ids';
 import type { GameState } from './types/state';
 
 // 상태를 얼려 두면 실수로 draft 밖에서 변형하는 버그가 즉시 드러난다.
@@ -142,8 +146,23 @@ export function applyChoice(state: GameState, choice: AnyChoice): GameState {
       case 'warlordTarget':
         resolveWarlordTarget(s, pending.player, choice.target);
         return;
-      default:
-        throw new Error(`아직 처리하지 않는 선택입니다: ${choice.type}`);
+      case 'discardCard':
+        resolveDiscardCard(
+          s,
+          pending.player,
+          (pending as { source: UniqueBuildingId }).source,
+          choice.card,
+        );
+        return;
+      case 'buildPayment':
+        resolveBuildPayment(
+          s,
+          pending.player,
+          (pending as { card: CardId }).card,
+          choice.gold,
+          choice.cards,
+        );
+        return;
     }
   });
 }

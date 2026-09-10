@@ -36,7 +36,8 @@ export function randomChoice(
       return [{ type: 'magicianMode', mode: 'redraw', discard: shuffled.slice(0, n) }, afterShuffle];
     }
     case 'buildPayment': {
-      const hand = view.me.hand;
+      // 건설 중인 카드는 도시로 가므로 지불에 쓸 수 없다.
+      const hand = view.me.hand.filter((c) => c !== d.card);
       const maxCards = Math.min(d.maxCards, hand.length, d.cost);
       const minCards = Math.max(0, d.cost - view.me.gold);
       const [n, afterN] = nextInt(rng, Math.max(1, maxCards - minCards + 1));

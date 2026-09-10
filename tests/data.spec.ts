@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { CHARACTER_DEFS, PRESETS, type BuildingDefId } from '@/data/generated';
+import { isPlayable, missingCards } from '@/engine/effects/registry';
 import {
   ALL_BUILDINGS as buildings,
   ALL_CHARACTERS as characters,
   BUILDING_KINDS,
   buildingDef,
   isConstructible,
+  presetDef,
   type BuildingKind,
 } from '@/data/types';
 
@@ -83,5 +85,19 @@ describe('프리셋 데이터', () => {
     for (const id of PRESETS.basic.uniques as readonly BuildingDefId[]) {
       expect(isConstructible(buildingDef(id))).toBe(true);
     }
+  });
+});
+
+describe('프리셋 플레이 가능 여부', () => {
+  it('기본 조합은 카드 22종이 모두 구현되어 플레이할 수 있다', () => {
+    const preset = presetDef('basic');
+    expect(missingCards(preset)).toEqual({ characters: [], uniques: [] });
+    expect(isPlayable(preset)).toBe(true);
+  });
+
+  it('createMatch 가 미구현 카드를 막는다', () => {
+    // 아직 효과가 없는 특수 건물을 억지로 끼운 프리셋
+    const broken = { ...presetDef('basic'), uniques: [...presetDef('basic').uniques, 'theater'] as never };
+    expect(missingCards(broken).uniques).toContain('theater');
   });
 });

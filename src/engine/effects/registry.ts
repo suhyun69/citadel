@@ -11,6 +11,20 @@ import { magician } from './characters/magician';
 import { merchant } from './characters/merchant';
 import { thief } from './characters/thief';
 import { warlord } from './characters/warlord';
+import { dragon_gate } from './buildings/dragon_gate';
+import { factory } from './buildings/factory';
+import { ghost_district } from './buildings/ghost_district';
+import { imperial_treasury } from './buildings/imperial_treasury';
+import { keep } from './buildings/keep';
+import { laboratory } from './buildings/laboratory';
+import { library } from './buildings/library';
+import { map_room } from './buildings/map_room';
+import { quarry } from './buildings/quarry';
+import { school_of_magic } from './buildings/school_of_magic';
+import { smithy } from './buildings/smithy';
+import { statue } from './buildings/statue';
+import { thieves_den } from './buildings/thieves_den';
+import { wishing_well } from './buildings/wishing_well';
 
 /**
  * 구현된 카드 효과만 등록한다. `Partial<Record<…>>` 인 것이 중요하다 —
@@ -28,7 +42,22 @@ export const CHARACTER_EFFECTS: Partial<Record<CharacterId, GameHooks>> = {
   warlord,
 };
 
-export const BUILDING_EFFECTS: Partial<Record<UniqueBuildingId, GameHooks>> = {};
+export const BUILDING_EFFECTS: Partial<Record<UniqueBuildingId, GameHooks>> = {
+  dragon_gate,
+  factory,
+  ghost_district,
+  imperial_treasury,
+  keep,
+  laboratory,
+  library,
+  map_room,
+  quarry,
+  school_of_magic,
+  smithy,
+  statue,
+  thieves_den,
+  wishing_well,
+};
 
 /**
  * 훅 합성 순서. 도시 건설 순서가 아니라 이 배열 순서로 정렬한다.

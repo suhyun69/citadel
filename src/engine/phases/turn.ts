@@ -148,22 +148,56 @@ export function mainActionPending(state: GameState, turn: TurnState): PendingDec
 export function applyBuild(state: GameState, card: CardId): void {
   const turn = state.action?.turn;
   if (!turn) throw new Error('진행 중인 차례가 없습니다');
-  const p = state.players[turn.playerId];
-  if (!p) throw new Error('알 수 없는 플레이어');
 
   const ctx = makeCtx(state, turn.playerId);
   const check = canBuild(state, turn.playerId, card, ctx);
   if (!check.ok) throw new Error(`건설할 수 없습니다: ${titleOf(card)} (${check.reason})`);
 
+  // 도적 소굴처럼 카드로도 낼 수 있는 건물은 지불 방식을 물어본다.
+  if (check.maxCards > 0) {
+    ctx.ask({
+      type: 'buildPayment',
+      player: turn.playerId,
+      prompt: `${titleOf(card)} 건설비용 ${check.cost}닢을 금화와 카드로 나눠 냅니다`,
+      card,
+      cost: check.cost,
+      maxCards: check.maxCards,
+    });
+    return;
+  }
+
+  placeBuilding(state, turn.playerId, card, check.cost, []);
+}
+
+/** 실제 배치. 지불이 끝난 뒤 한 번만 부른다. */
+export function placeBuilding(
+  state: GameState,
+  player: PlayerId,
+  card: CardId,
+  gold: number,
+  cardsPaid: readonly CardId[],
+): void {
+  const turn = state.action?.turn;
+  const p = state.players[player];
+  if (!p) throw new Error('알 수 없는 플레이어');
+
   const idx = p.hand.indexOf(card);
   if (idx === -1) throw new Error(`손에 없는 카드입니다: ${card}`);
   p.hand.splice(idx, 1);
-  p.gold -= check.cost;
-  p.city.push({ card });
-  turn.buildsUsed += 1;
 
-  state.log.push({ t: 'built', player: turn.playerId, card, paid: check.cost });
-  noteCompletion(state, turn.playerId);
+  for (const paid of cardsPaid) {
+    const i = p.hand.indexOf(paid);
+    if (i === -1) throw new Error(`지불에 쓸 수 없는 카드입니다: ${paid}`);
+    p.hand.splice(i, 1);
+  }
+  returnToBottom(state, cardsPaid);
+
+  p.gold -= gold;
+  p.city.push({ card });
+  if (turn) turn.buildsUsed += 1;
+
+  state.log.push({ t: 'built', player, card, paid: gold });
+  noteCompletion(state, player);
 }
 
 /** 도시가 방금 완성되었는지 기록한다. 선완성 4점 / 후완성 2점의 근거. */

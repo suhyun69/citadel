@@ -55,6 +55,8 @@ export function legalChoices(d: PendingDecision): AnyChoice[] | null {
       out.push({ type: 'warlordTarget', target: null });
       return out;
     }
+    case 'discardCard':
+      return d.options.map((card) => ({ type: 'discardCard', card }));
     case 'magicianMode':
     case 'buildPayment':
       return null; // 부분집합 선택 — 열거하지 않는다
@@ -84,6 +86,8 @@ export function isLegal(state: GameState, d: PendingDecision, c: AnyChoice): boo
       if (c.target === null) return d.canSkip;
       return d.options.some((o) => o.player === c.target?.player && o.card === c.target?.card);
     }
+    case 'discardCard':
+      return c.type === 'discardCard' && d.options.includes(c.card);
     case 'magicianMode': {
       if (c.type !== 'magicianMode') return false;
       if (c.mode === 'swap') return d.canSwapWith.includes(c.target);
@@ -97,6 +101,8 @@ export function isLegal(state: GameState, d: PendingDecision, c: AnyChoice): boo
       if (c.gold < 0 || c.cards.length > d.maxCards) return false;
       if (c.gold + c.cards.length !== d.cost) return false;
       if (c.gold > p.gold) return false;
+      // 건설 중인 카드 자신으로는 그 건설비용을 낼 수 없다 — 도시로 가는 카드다.
+      if (c.cards.includes(d.card)) return false;
       return c.cards.every((card) => p.hand.includes(card)) && new Set(c.cards).size === c.cards.length;
     }
   }

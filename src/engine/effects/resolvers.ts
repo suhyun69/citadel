@@ -5,6 +5,9 @@ import type { AnyChoice } from '../types/decision';
 import type { CardId, PlayerId } from '../types/ids';
 import type { GameState } from '../types/state';
 import { holderOf } from './characters/_shared';
+import { LABORATORY_GOLD } from './buildings/laboratory';
+import { placeBuilding } from '../phases/turn';
+import type { UniqueBuildingId } from '@/data/types';
 
 /**
  * 효과가 띄운 결정의 처리.
@@ -91,4 +94,36 @@ export function resolveWarlordTarget(
   if (removed) returnToBottom(state, [removed.card]);
 
   state.log.push({ t: 'destroyed', by: self, target: target.player, card: target.card, paid: price });
+}
+
+export function resolveDiscardCard(
+  state: GameState,
+  self: PlayerId,
+  source: UniqueBuildingId,
+  card: CardId,
+): void {
+  const p = state.players[self];
+  if (!p) throw new Error('알 수 없는 플레이어');
+  const i = p.hand.indexOf(card);
+  if (i === -1) throw new Error(`손에 없는 카드입니다: ${card}`);
+
+  p.hand.splice(i, 1);
+  returnToBottom(state, [card]);
+
+  if (source === 'laboratory') {
+    p.gold += LABORATORY_GOLD;
+    state.log.push({ t: 'gained', player: self, gold: LABORATORY_GOLD, reason: '실험실' });
+    return;
+  }
+  throw new Error(`처리할 수 없는 버리기 출처입니다: ${source}`);
+}
+
+export function resolveBuildPayment(
+  state: GameState,
+  self: PlayerId,
+  card: CardId,
+  gold: number,
+  cards: readonly CardId[],
+): void {
+  placeBuilding(state, self, card, gold, cards);
 }

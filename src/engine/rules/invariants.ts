@@ -1,5 +1,5 @@
 import { buildDeck } from '../setup';
-import type { CardId } from '../types/ids';
+import { defIdOf, type CardId } from '../types/ids';
 import type { GameState, MatchConfig } from '../types/state';
 
 /**
@@ -48,13 +48,17 @@ export function checkInvariants(state: GameState): string[] {
     problems.push(`카드 총량이 ${seen.size}장입니다 (기대 ${expectedTotal}장)`);
   }
 
-  // 도시에 이름이 같은 건물이 둘 이상이면, 그것을 허용하는 효과(채석장)가 있어야 한다.
-  // M1 단계에서는 효과가 없으므로 항상 위반이면 버그다.
-  for (const p of state.players) {
-    const titles = p.city.map((e) => e.card.split('#')[0]);
-    const dupes = titles.filter((t, i) => titles.indexOf(t) !== i);
-    if (dupes.length > 0 && !hasDuplicateAllowance(state, p.id)) {
-      problems.push(`P${p.id} 의 도시에 동명 건물이 있습니다: ${[...new Set(dupes)].join(', ')}`);
+  // 동명 건물은 채석장이 있어야 지을 수 있다. 다만 "지금 채석장이 있는가" 로는
+  // 판정할 수 없다 — 채석장으로 합법적으로 지은 뒤 장군이 채석장을 파괴하면
+  // 동명 건물만 남기 때문이다. 최종 상태만 보는 검사가 답할 수 있는 것은
+  // "이 게임의 카드 구성에 채석장이 아예 없는데 동명 건물이 있는가" 까지다.
+  if (!state.config.uniqueBuildingIds.includes('quarry')) {
+    for (const p of state.players) {
+      const titles = p.city.map((e) => defIdOf(e.card));
+      const dupes = titles.filter((t, i) => titles.indexOf(t) !== i);
+      if (dupes.length > 0) {
+        problems.push(`P${p.id} 의 도시에 동명 건물이 있습니다: ${[...new Set(dupes)].join(', ')}`);
+      }
     }
   }
 
@@ -65,16 +69,12 @@ export function checkInvariants(state: GameState): string[] {
   return problems;
 }
 
-function hasDuplicateAllowance(state: GameState, player: number): boolean {
-  // 채석장이 도시에 있는지 확인. 구현 전 단계에서는 항상 false 다.
-  return state.players[player]?.city.some((e) => e.card.startsWith('quarry#')) ?? false;
-}
-
 export function assertInvariants(state: GameState, context = ''): void {
   const problems = checkInvariants(state);
   if (problems.length === 0) return;
   throw new Error(
-    `불변식 위반${context ? ` (${context})` : ''} — seed=${state.config.seed}, round=${state.round}\n` +
+    `불변식 위반${context ? ` (${context})` : ''} — seed=${state.config.seed}, ` +
+      `players=${state.config.playerCount}, round=${state.round}\n` +
       problems.map((p) => `  • ${p}`).join('\n'),
   );
 }

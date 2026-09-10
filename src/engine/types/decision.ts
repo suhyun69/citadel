@@ -64,6 +64,11 @@ export interface DecisionMap {
     };
     c: { target: { player: PlayerId; card: CardId } | null };
   };
+  /** 실험실: 손패 1장을 버린다. source 로 어느 건물이 물었는지 구분한다. */
+  discardCard: {
+    d: { source: UniqueBuildingId; options: readonly CardId[] };
+    c: { card: CardId };
+  };
   /** 도적 소굴: 건설비용을 금화/카드로 나눠 내기 */
   buildPayment: {
     d: { card: CardId; cost: number; maxCards: number };

@@ -3,80 +3,67 @@ import { makeScoreCtx } from '../effects/ctx';
 import { collectHooks } from '../effects/registry';
 import { cityCost } from '../rules/build';
 import { defOf, playerId, type PlayerId } from '../types/ids';
-import type { GameState, MatchResult, PlayerScore } from '../types/state';
+import type { CityEntry, GameState, MatchResult, PlayerScore } from '../types/state';
 
 export const ALL_KINDS_BONUS = 3;
 export const FIRST_COMPLETE_BONUS = 4;
 export const COMPLETE_BONUS = 2;
 
 /**
- * 유령 지구의 "원하는 종류" 결정.
+ * 유령 지구를 어떤 종류로 쓸지. 규칙상 플레이어가 고르지만 숨은 정보가 없는
+ * 순수 최대화 문제라 pending 을 하나 더 만들 가치가 없다.
  *
- * 규칙상 플레이어가 고르지만 숨은 정보가 없는 순수 최대화 문제라 pending 을
- * 하나 더 만들 가치가 없다. 다만 **최대화 대상은 최종 점수여야 한다** —
- * 유령 지구를 특수 이외의 종류로 쓰면 더 이상 특수 건물이 아니게 되어
- * 소원의 우물 점수에서 빠지기 때문이다(howto.md 건물 상세 설명).
+ * 다만 **최대화 대상은 최종 점수여야 한다** — 유령 지구를 특수 이외의 종류로
+ * 쓰면 더 이상 특수 건물이 아니게 되어 소원의 우물 점수에서 빠지기 때문이다.
  * 그래서 후보를 전부 계산해 최댓값을 고른다.
  */
 export type WildcardAs = BuildingKind | null;
 
-function wildcardEntries(state: GameState, player: PlayerId): number {
-  const p = state.players[player];
-  if (!p) return 0;
-  const ctx = makeScoreCtx(state, player);
-  const hooks = collectHooks(state, player);
-  let n = 0;
-  for (const entry of p.city) {
-    for (const h of hooks) {
-      if (h.scoringKindOverride?.(entry, ctx) === 'wildcard') {
-        n += 1;
-        break;
-      }
-    }
+/**
+ * 게임 종료 시점에 이 건물이 어떤 종류로 세어지는가.
+ *
+ * ★ 수입 계산의 countIncome 과 별개다. 마법학교는 "자원을 받는 능력" 에만
+ *   걸리고 여기엔 관여하지 않으며, 유령 지구는 반대로 여기에만 걸린다.
+ *   둘을 한 메커니즘으로 합치면 마법학교가 5종 보너스를 채우거나
+ *   유령 지구가 주교 수입을 늘리는 버그가 조용히 생긴다.
+ */
+export function scoringKindOf(
+  state: GameState,
+  player: PlayerId,
+  entry: CityEntry,
+  wildcardAs: WildcardAs,
+): BuildingKind {
+  const ctx = makeScoreCtx(state, player, wildcardAs);
+  for (const h of collectHooks(state, player)) {
+    const o = h.scoringKindOverride?.(entry, ctx);
+    if (o === 'wildcard') return wildcardAs ?? defOf(entry.card).kind;
+    if (o) return o;
   }
-  return n;
+  return defOf(entry.card).kind;
 }
 
-function kindsPresent(state: GameState, player: PlayerId, wildcardAs: WildcardAs): Set<BuildingKind> {
+function hasWildcard(state: GameState, player: PlayerId): boolean {
   const p = state.players[player];
-  const present = new Set<BuildingKind>();
-  if (!p) return present;
-
-  const ctx = makeScoreCtx(state, player);
+  if (!p) return false;
+  const ctx = makeScoreCtx(state, player, null);
   const hooks = collectHooks(state, player);
-
-  for (const entry of p.city) {
-    let kind: BuildingKind | 'wildcard' | null = null;
-    for (const h of hooks) {
-      const o = h.scoringKindOverride?.(entry, ctx);
-      if (o) {
-        kind = o;
-        break;
-      }
-    }
-    if (kind === 'wildcard') {
-      if (wildcardAs) present.add(wildcardAs);
-      else present.add(defOf(entry.card).kind);
-    } else {
-      present.add(kind ?? defOf(entry.card).kind);
-    }
-  }
-  return present;
+  return p.city.some((entry) => hooks.some((h) => h.scoringKindOverride?.(entry, ctx) === 'wildcard'));
 }
 
 function scoreWith(state: GameState, player: PlayerId, wildcardAs: WildcardAs): PlayerScore {
   const p = state.players[player];
   const buildingCost = cityCost(state, player);
 
-  const present = kindsPresent(state, player, wildcardAs);
+  const present = new Set<BuildingKind>();
+  for (const entry of p?.city ?? []) present.add(scoringKindOf(state, player, entry, wildcardAs));
   const allKindsBonus = BUILDING_KINDS.every((k) => present.has(k)) ? ALL_KINDS_BONUS : 0;
 
   let completionBonus = 0;
-  if (p?.cityCompletedAtRound !== null && p !== undefined) {
+  if (p && p.cityCompletedAtRound !== null) {
     completionBonus = state.firstCompleted === player ? FIRST_COMPLETE_BONUS : COMPLETE_BONUS;
   }
 
-  const ctx = makeScoreCtx(state, player);
+  const ctx = makeScoreCtx(state, player, wildcardAs);
   let uniqueBonus = 0;
   for (const h of collectHooks(state, player)) {
     if (h.endGameScore) uniqueBonus += h.endGameScore(ctx);
@@ -93,7 +80,7 @@ function scoreWith(state: GameState, player: PlayerId, wildcardAs: WildcardAs): 
 }
 
 export function scoreFor(state: GameState, player: PlayerId): PlayerScore {
-  if (wildcardEntries(state, player) === 0) return scoreWith(state, player, null);
+  if (!hasWildcard(state, player)) return scoreWith(state, player, null);
 
   let best = scoreWith(state, player, null);
   for (const kind of BUILDING_KINDS) {

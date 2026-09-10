@@ -17,7 +17,7 @@ const deny = (patterns) => ({
 });
 
 export default tseslint.config(
-  { ignores: ['node_modules/**', '.next/**', 'src/data/generated/**'] },
+  { ignores: ['node_modules/**', '.next/**', 'src/data/generated/**', 'next-env.d.ts'] },
   ...tseslint.configs.recommended,
   {
     files: ['src/data/**/*.ts'],

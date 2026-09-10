@@ -9,8 +9,8 @@
 import { RandomAgent } from '@/bot/random';
 import { missingCards } from '@/engine/effects/registry';
 import { createMatchUnchecked, matchConfig } from '@/engine/setup';
-import { titleOf } from '@/engine/types/ids';
 import type { GameEvent } from '@/engine/types/event';
+import { formatEvent } from '@/ui/format';
 import type { GameState } from '@/engine/types/state';
 import { runMatch, seatAgents } from '@/runtime/runner';
 import { buildingDef, characterDef, presetDef, type PresetId } from '@/data/types';
@@ -38,38 +38,10 @@ function parseArgs(argv: string[]): Args {
 }
 
 function describe(e: GameEvent): string {
-  switch (e.t) {
-    case 'roundStart':
-      return `\n── 라운드 ${e.round} (왕관: P${e.crowned})`;
-    case 'charactersDiscarded':
-      return `   버림: 앞면 [${e.faceUp.map((c) => characterDef(c).name).join(', ')}], 뒷면 ${e.faceDownCount}장`;
-    case 'rankCalled':
-      return `  ${e.rank}번 호명`;
-    case 'rankAbsent':
-      return `    (아무도 없음)`;
-    case 'characterRevealed':
-      return `    P${e.player} = ${characterDef(e.character).name}`;
-    case 'skipped':
-      return `    P${e.player} 암살당해 차례를 쉽니다`;
-    case 'gained':
-      return `    P${e.player} +${e.gold ? `금화 ${e.gold}` : `카드 ${e.cards}`} (${e.reason})`;
-    case 'built':
-      return `    P${e.player} 건설: ${titleOf(e.card)} (${e.paid}닢)`;
-    case 'destroyed':
-      return `    P${e.by} 가 P${e.target} 의 ${titleOf(e.card)} 파괴 (${e.paid}닢)`;
-    case 'stolen':
-      return `    P${e.by} 가 P${e.from} 에게서 금화 ${e.gold}닢 강탈`;
-    case 'crownMoved':
-      return `    왕관 → P${e.to} (${e.reason})`;
-    case 'deckExhausted':
-      return `    ⚠ 더미 고갈: ${e.wanted}장 요청, ${e.got}장 획득`;
-    case 'cityCompleted':
-      return `    ★ P${e.player} 도시 완성${e.first ? ' (최초!)' : ''}`;
-    case 'gameOver':
-      return `\n게임 종료 — 승자 P${e.winner}`;
-    default:
-      return '';
-  }
+  const f = formatEvent(e);
+  if (!f) return '';
+  const indent = '  '.repeat(f.depth);
+  return f.depth === 0 ? `\n${indent}${f.text}` : `${indent}${f.text}`;
 }
 
 function report(state: GameState): void {

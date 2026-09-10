@@ -1,0 +1,257 @@
+:root {
+  --bg: #f6f5f2;
+  --panel: #ffffff;
+  --panel-2: #faf9f6;
+  --line: #e2ddd3;
+  --ink: #23201b;
+  --ink-2: #6b6459;
+  --ink-3: #9b9387;
+  --gold: #b8860b;
+  --accent: #7b3f2e;
+
+  --religious: #6c5ce7;
+  --military: #c0392b;
+  --noble: #2d7d5a;
+  --trade: #b8860b;
+  --unique: #8e44ad;
+
+  --good: #2d7d5a;
+  --bad: #c0392b;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #16151a;
+    --panel: #1e1d24;
+    --panel-2: #24232b;
+    --line: #33313c;
+    --ink: #e9e6e0;
+    --ink-2: #a49f97;
+    --ink-3: #746e66;
+    --gold: #d4a531;
+    --accent: #d98b6f;
+
+    --religious: #9b8cff;
+    --military: #e57373;
+    --noble: #6ec49a;
+    --trade: #d4a531;
+    --unique: #c07fdb;
+
+    --good: #6ec49a;
+    --bad: #e57373;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Apple SD Gothic Neo',
+    'Pretendard', 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.page {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 20px 20px 48px;
+}
+
+header.top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px 16px;
+  margin-bottom: 18px;
+}
+header.top h1 {
+  font-size: 20px;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+header.top .sub {
+  color: var(--ink-2);
+  font-size: 13px;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  margin-bottom: 16px;
+}
+.controls label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-2);
+  font-size: 13px;
+}
+.controls input[type='number'],
+.controls select {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  border-radius: 6px;
+  padding: 5px 8px;
+  font: inherit;
+  font-size: 13px;
+}
+.controls input[type='number'] { width: 84px; }
+.controls .spacer { flex: 1 1 auto; }
+
+button {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+button:hover { border-color: var(--ink-3); }
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+button:disabled { opacity: 0.45; cursor: default; }
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px;
+}
+.panel + .panel { margin-top: 16px; }
+.panel h2 {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin: 0 0 10px;
+  font-weight: 600;
+}
+
+/* ── 순번 트랙 ─────────────────────────────── */
+.track { display: flex; flex-wrap: wrap; gap: 6px; }
+.rank {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 74px;
+  padding: 7px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-2);
+}
+.rank .no { font-size: 11px; color: var(--ink-3); }
+.rank .nm { font-size: 13px; font-weight: 600; }
+.rank .who { font-size: 11px; color: var(--ink-2); min-height: 16px; }
+.rank.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.rank.gone { opacity: 0.4; }
+.rank.gone .nm { text-decoration: line-through; }
+
+/* ── 플레이어 보드 ───────────────────────────── */
+.boards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+.board {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  padding: 12px;
+}
+.board.turn { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.board .head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.board .name { font-weight: 700; }
+.board .role { font-size: 12px; color: var(--ink-2); }
+.board .stats { margin-left: auto; font-size: 12px; color: var(--ink-2); }
+.board .stats b { color: var(--gold); font-variant-numeric: tabular-nums; }
+
+.city { display: flex; flex-wrap: wrap; gap: 4px; min-height: 26px; }
+.tile {
+  font-size: 11px;
+  padding: 3px 7px;
+  border-radius: 5px;
+  border: 1px solid transparent;
+  color: #fff;
+  white-space: nowrap;
+}
+.tile .c { opacity: 0.75; margin-left: 3px; font-variant-numeric: tabular-nums; }
+.tile.religious { background: var(--religious); }
+.tile.military { background: var(--military); }
+.tile.noble { background: var(--noble); }
+.tile.trade { background: var(--trade); }
+.tile.unique { background: var(--unique); }
+
+.progress {
+  height: 4px;
+  background: var(--line);
+  border-radius: 2px;
+  margin-top: 9px;
+  overflow: hidden;
+}
+.progress > span { display: block; height: 100%; background: var(--accent); }
+
+/* ── 로그 ─────────────────────────────────── */
+.log {
+  max-height: 460px;
+  overflow-y: auto;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.log .row { padding: 1px 0; color: var(--ink-2); }
+.log .d0 { color: var(--ink); font-weight: 700; margin-top: 8px; }
+.log .d1 { padding-left: 10px; }
+.log .d2 { padding-left: 22px; }
+.log .good { color: var(--good); }
+.log .bad { color: var(--bad); }
+.log .note { color: var(--ink-3); }
+
+/* ── 점수판 ───────────────────────────────── */
+table.scores { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.scores th {
+  text-align: right;
+  font-size: 11px;
+  color: var(--ink-3);
+  font-weight: 600;
+  padding: 4px 6px;
+}
+table.scores th:first-child { text-align: left; }
+table.scores td {
+  padding: 5px 6px;
+  text-align: right;
+  border-top: 1px solid var(--line);
+  font-variant-numeric: tabular-nums;
+}
+table.scores td:first-child { text-align: left; }
+table.scores tr.win td { color: var(--gold); font-weight: 700; }
+table.scores td.total { font-weight: 700; }

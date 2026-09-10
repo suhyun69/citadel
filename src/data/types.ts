@@ -53,6 +53,15 @@ void _buildings;
 void _characters;
 void _presets;
 
+/**
+ * 생성된 상수는 `as const` 라 리터럴 타입이 지나치게 좁다. 밖에서는 항상
+ * 이 넓힌 뷰를 쓴다 — 그러지 않으면 `b.text !== ''` 같은 평범한 비교가
+ * "겹치지 않는 타입" 오류로 튄다.
+ */
+export const ALL_BUILDINGS: readonly BuildingDef[] = Object.values(BUILDING_DEFS);
+export const ALL_CHARACTERS: readonly CharacterDef[] = Object.values(CHARACTER_DEFS);
+export const ALL_PRESETS: readonly PresetDef[] = Object.values(PRESETS);
+
 export const buildingDef = (id: BuildingDefId): BuildingDef => BUILDING_DEFS[id];
 export const characterDef = (id: CharacterId): CharacterDef => CHARACTER_DEFS[id];
 export const presetDef = (id: PresetId): PresetDef => PRESETS[id];

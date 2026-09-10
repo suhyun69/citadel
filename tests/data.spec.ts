@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { BUILDING_DEFS, CHARACTER_DEFS, PRESETS, type BuildingDefId } from '@/data/generated';
-import { BUILDING_KINDS, buildingDef, isConstructible, type BuildingKind } from '@/data/types';
-
-const buildings = Object.values(BUILDING_DEFS);
-const characters = Object.values(CHARACTER_DEFS);
+import { CHARACTER_DEFS, PRESETS, type BuildingDefId } from '@/data/generated';
+import {
+  ALL_BUILDINGS as buildings,
+  ALL_CHARACTERS as characters,
+  BUILDING_KINDS,
+  buildingDef,
+  isConstructible,
+  type BuildingKind,
+} from '@/data/types';
 
 describe('건물 데이터', () => {
   it('서로 다른 title 47종, 총 84장', () => {

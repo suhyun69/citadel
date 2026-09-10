@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import { HeuristicAgent } from '@/bot/heuristic';
 import { checkInvariants } from '@/engine/rules/invariants';
+import { createMatch, matchConfig } from '@/engine/setup';
+import { playerId } from '@/engine/types/ids';
+import { runMatch } from '@/runtime/runner';
 import { playRandomGame } from './helpers/run';
 
 /**
@@ -40,4 +44,28 @@ describe(`랜덤봇 퍼즈 (${SEEDS}시드 × ${PLAYER_COUNTS.length}인원 = ${
       }
     });
   }
+});
+
+/**
+ * 휴리스틱 봇은 무작위 봇과 전혀 다른 경로를 밟는다 — 실제로 건물을 짓고,
+ * 능력을 순서대로 쓰고, 도시를 빠르게 완성한다. 무작위 퍼즈가 안 건드리는
+ * 상태(완성된 도시, 두둑한 금고, 긴 손패)를 여기서 훑는다.
+ */
+describe('휴리스틱 봇 퍼즈', () => {
+  it('실전에 가까운 진행에서도 불변식이 유지된다', async () => {
+    for (let seed = 0; seed < 50; seed++) {
+      for (const playerCount of [4, 7]) {
+        const config = matchConfig({ seed, playerCount });
+        const agents = new Map(
+          Array.from({ length: playerCount }, (_, i) => [
+            playerId(i),
+            new HeuristicAgent(`h${i}`, seed * 100 + i),
+          ]),
+        );
+        const final = await runMatch(createMatch(config), agents, { verifyInvariants: true });
+        expect(checkInvariants(final), `seed=${seed} players=${playerCount}`).toEqual([]);
+        expect(final.phase).toBe('finished');
+      }
+    }
+  }, 120_000);
 });

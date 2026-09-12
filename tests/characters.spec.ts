@@ -333,6 +333,58 @@ describe('장군', () => {
   });
 });
 
+describe('지목은 공개 선언이라 기록에 남는다', () => {
+  it('암살자가 누구를 지목했는지 남는다', () => {
+    const gm = aGame().players(4).assign(0, 'assassin').assign(1, 'king').atTurn(0).build();
+
+    useAbility(gm, 'assassin.kill');
+    answer(gm, { type: 'namedCharacter', characterId: 'king' });
+
+    expect(gm.log()).toContainEqual({
+      t: 'declared',
+      by: playerId(0),
+      purpose: 'assassinate',
+      target: 'king',
+    });
+  });
+
+  it('도둑이 누구를 지목했는지 남는다', () => {
+    const gm = aGame().players(4).assign(0, 'thief').assign(1, 'merchant').atTurn(0).build();
+
+    useAbility(gm, 'thief.rob');
+    answer(gm, { type: 'namedCharacter', characterId: 'merchant' });
+
+    expect(gm.log()).toContainEqual({
+      t: 'declared',
+      by: playerId(0),
+      purpose: 'rob',
+      target: 'merchant',
+    });
+  });
+
+  it('아무도 가지지 않은 캐릭터를 지목해도 기록에 남는다', () => {
+    // 왕을 아무도 안 골랐다 — 그래도 "왕을 지목했다" 는 공개된 사실이다
+    const gm = aGame().players(4).assign(0, 'assassin').assign(1, 'merchant').atTurn(0).build();
+
+    useAbility(gm, 'assassin.kill');
+    answer(gm, { type: 'namedCharacter', characterId: 'king' });
+
+    expect(gm.log().some((e) => e.t === 'declared' && e.target === 'king')).toBe(true);
+  });
+
+  it('공개 선언이므로 누구의 시점에서도 가려지지 않는다', () => {
+    const gm = aGame().players(4).assign(0, 'assassin').assign(1, 'king').atTurn(0).build();
+
+    useAbility(gm, 'assassin.kill');
+    answer(gm, { type: 'namedCharacter', characterId: 'king' });
+
+    for (const player of gm.players()) {
+      const seen = player.view().log.some((e) => e.t === 'declared');
+      expect(seen, `P${player.id} 의 시점에서 지목이 사라졌습니다`).toBe(true);
+    }
+  });
+});
+
 describe('무작위 대전에서 능력이 실제로 발동한다', () => {
   it('암살·절도·파괴·왕관 이동이 모두 로그에 나타난다', async () => {
     const seen = new Set<string>();

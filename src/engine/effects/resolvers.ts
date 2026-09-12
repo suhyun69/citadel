@@ -25,6 +25,10 @@ export function resolveNamedCharacter(
   const a = state.action;
   if (!a) throw new Error('행동 단계가 아닙니다');
 
+  // 지목은 공개 선언이다 — 대상이 실제로 판에 있든 없든 기록에 남는다.
+  const by = a.turn?.playerId;
+  if (by !== undefined) state.log.push({ t: 'declared', by, purpose, target: character });
+
   if (purpose === 'assassinate') {
     a.declared.assassinTarget = character;
     const victim = holderOf(state, character);

@@ -47,6 +47,15 @@ export function formatEvent(e: GameEvent): FormattedEvent | null {
       return { text: '아무도 없음', depth: 2, tone: 'note' };
     case 'characterRevealed':
       return { text: `P${e.player} — ${characterName(e.character)}`, depth: 2 };
+    case 'declared':
+      return {
+        text:
+          e.purpose === 'assassinate'
+            ? `P${e.by} 암살 지목 → ${characterName(e.target)}`
+            : `P${e.by} 절도 지목 → ${characterName(e.target)}`,
+        depth: 2,
+        tone: 'bad',
+      };
     case 'skipped':
       return { text: `P${e.player} 암살당해 차례를 쉼`, depth: 2, tone: 'bad' };
     case 'gained':

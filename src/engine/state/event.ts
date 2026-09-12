@@ -14,6 +14,11 @@ export type GameEvent =
   | { t: 'characterRevealed'; player: PlayerId; character: CharacterId }
   | { t: 'rankAbsent'; rank: number }
   | { t: 'skipped'; player: PlayerId; character: CharacterId; reason: 'killed' }
+  /**
+   * 암살자·도둑의 지목. 규칙상 **공개 선언**이므로(howto.md:220, 251)
+   * 누구에게도 가려지지 않는다.
+   */
+  | { t: 'declared'; by: PlayerId; purpose: 'assassinate' | 'rob'; target: CharacterId }
   | { t: 'gained'; player: PlayerId; gold?: number; cards?: number; reason: string }
   | { t: 'paid'; player: PlayerId; gold: number; reason: string }
   | { t: 'built'; player: PlayerId; card: CardId; paid: number }

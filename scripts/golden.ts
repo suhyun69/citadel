@@ -16,9 +16,8 @@ import { fileURLToPath } from 'node:url';
 import type { Agent } from '@/bot/agent';
 import { HeuristicAgent } from '@/bot/heuristic';
 import { RandomAgent } from '@/bot/random';
-import { createMatch, matchConfig } from '@/engine/setup';
+import { createGame } from '@/engine';
 import { playerId } from '@/engine/state/ids';
-import type { Choice } from '@/engine/state/prompt';
 import type { GameState } from '@/engine/state/game-state';
 import { runMatch } from '@/runtime/runner';
 
@@ -57,28 +56,26 @@ export async function playGolden(
   players: number,
   bot: string,
 ): Promise<GoldenEntry> {
-  const config = matchConfig({ seed, playerCount: players });
   const agents = new Map(
     Array.from({ length: players }, (_, i) => [playerId(i), makeAgent(bot, seed * 100 + i)]),
   );
-  const choiceLog: Choice[] = [];
-  const final = await runMatch(createMatch(config), agents, { choiceLog });
+  const master = await runMatch(createGame({ seed, playerCount: players }), agents);
 
   return {
     seed,
     players,
     bot,
-    rounds: final.round,
-    winner: final.result?.winner ?? -1,
-    scores: (final.result?.scores ?? []).map((s) => [
+    rounds: master.round(),
+    winner: master.result()?.winner ?? -1,
+    scores: (master.result()?.scores ?? []).map((s) => [
       s.buildingCost,
       s.allKindsBonus,
       s.completionBonus,
       s.uniqueBonus,
       s.total,
     ]),
-    hash: hashState(final),
-    choices: choiceLog.length,
+    hash: hashState(master.snapshot()),
+    choices: master.history().length,
   };
 }
 

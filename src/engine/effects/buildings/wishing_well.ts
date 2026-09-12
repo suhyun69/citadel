@@ -1,4 +1,4 @@
-import { scoringKindOf } from '../../phases/scoring';
+import { scoringKindOf } from '../../flow/scoring';
 import type { GameHooks } from '../hooks';
 
 /**

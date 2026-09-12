@@ -66,7 +66,7 @@ export function selectionOptions(state: GameState, sel: SelectionState): Charact
   return options;
 }
 
-export function selectionPending(state: GameState, sel: SelectionState): Prompt {
+export function selectionPrompt(state: GameState, sel: SelectionState): Prompt {
   const player = sel.order[sel.cursor];
   if (player === undefined) throw new Error('선택 단계 커서가 범위를 벗어났습니다');
   const options = selectionOptions(state, sel);

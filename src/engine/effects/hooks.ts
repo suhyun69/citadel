@@ -58,6 +58,14 @@ export interface GameHooks {
   paymentOptions?(def: BuildingDef, ctx: EffectCtx): PaymentOption[];
   /** 마법학교: 수입 계산에서만 임의 종류로 간주 */
   countsAsKind?(entry: CityEntry, want: BuildingKind, ctx: EffectCtx): boolean;
+  /**
+   * 이 캐릭터가 도시의 어떤 종류를 세어 수입을 받는가 (왕=귀족, 주교=종교 …).
+   *
+   * 선언만 하고 지급은 각 캐릭터의 performAction 이 한다. 지급 로직 옆에
+   * 두는 이유는, Character.pendingIncome() 이 쓸 매핑을 따로 만들면
+   * 언젠가 둘이 어긋나기 때문이다.
+   */
+  incomeKind?: BuildingKind;
   /** 주교(도시 전체) / 외성(자기 카드만): 8번 캐릭터 능력의 대상이 되지 않음 */
   immuneToRank8?(entry: CityEntry, ctx: EffectCtx): boolean;
   /** 차례 메뉴에 노출할 행동 */

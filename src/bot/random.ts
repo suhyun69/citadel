@@ -1,4 +1,4 @@
-import { legalChoices } from '@/engine/query';
+import { legalChoices } from '@/engine/options/enumerate';
 import { nextInt, pick, seedRng, shuffle, type RngState } from '@/engine/rng';
 import type { Choice, Prompt } from '@/engine/state/prompt';
 import type { PlayerView } from '@/engine/view';

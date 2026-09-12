@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { applyChoice, step } from '@/engine/machine';
-import { scoreFor } from '@/engine/phases/scoring';
+import { scoreFor } from '@/engine/flow/scoring';
 import { checkInvariants } from '@/engine/rules/invariants';
 import { destroyTargets } from '@/engine/rules/rank8';
 import { playerId } from '@/engine/state/ids';

@@ -56,7 +56,7 @@ export function startTurn(state: GameState, player: PlayerId, characterId: impor
   for (const h of collectHooks(state, player)) h.onTurnStart?.(ctx);
 }
 
-export function gatherPending(state: GameState, turn: TurnState): Prompt {
+export function gatherPrompt(state: GameState, turn: TurnState): Prompt {
   const plan = gatherPlan(state, turn.playerId);
   return {
     type: 'gatherMode',
@@ -83,7 +83,7 @@ export function applyGatherMode(state: GameState, mode: 'gold' | 'cards'): void 
   }
 }
 
-export function keepDrawnPending(state: GameState, turn: TurnState): Prompt {
+export function keepDrawnPrompt(state: GameState, turn: TurnState): Prompt {
   const plan = gatherPlan(state, turn.playerId);
   const drawn = turn.drawn ?? [];
   return {
@@ -136,7 +136,7 @@ export function mainActionOptions(state: GameState, turn: TurnState): MainAction
   return options;
 }
 
-export function mainActionPending(state: GameState, turn: TurnState): Prompt {
+export function mainActionPrompt(state: GameState, turn: TurnState): Prompt {
   return {
     type: 'mainAction',
     player: turn.playerId,

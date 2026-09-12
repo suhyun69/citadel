@@ -9,7 +9,7 @@
 import { RandomAgent } from '@/bot/random';
 import { HeuristicAgent, POLICIES } from '@/bot/heuristic';
 import type { Agent } from '@/bot/agent';
-import { createMatch, matchConfig } from '@/engine/setup';
+import { createGame } from '@/engine';
 import { playerId } from '@/engine/state/ids';
 import { runMatch } from '@/runtime/runner';
 
@@ -38,18 +38,16 @@ async function main(): Promise<void> {
 
   for (let g = 0; g < games; g++) {
     const seat = g % playerCount; // 좌석 회전
-    const config = matchConfig({ seed: g, playerCount });
-
     const agents = new Map<ReturnType<typeof playerId>, Agent>();
     for (let i = 0; i < playerCount; i++) {
       const kind = i === seat ? aKind : bKind;
       agents.set(playerId(i), makeAgent(kind, `${kind}${i}`, g * 100 + i));
     }
 
-    const final = await runMatch(createMatch(config), agents);
-    if (final.result?.winner === seat) aWins += 1;
+    const master = await runMatch(createGame({ seed: g, playerCount }), agents);
+    if (master.result()?.winner === seat) aWins += 1;
 
-    for (const s of final.result?.scores ?? []) {
+    for (const s of master.result()?.scores ?? []) {
       if (s.player === seat) aScore += s.total;
       else bScore += s.total;
     }

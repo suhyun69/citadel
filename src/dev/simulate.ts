@@ -8,7 +8,7 @@
  */
 import { RandomAgent } from '@/bot/random';
 import { missingCards } from '@/engine/effects/registry';
-import { createMatchUnchecked, matchConfig } from '@/engine/setup';
+import { createGame } from '@/engine';
 import type { GameEvent } from '@/engine/state/event';
 import { formatEvent } from '@/ui/format';
 import type { GameState } from '@/engine/state/game-state';
@@ -78,22 +78,24 @@ async function main(): Promise<void> {
   for (const playerCount of args.players) {
     for (let i = 0; i < args.seeds; i++) {
       const seed = args.seed + i;
-      const config = matchConfig({ seed, playerCount, presetId: args.preset });
-      const state = createMatchUnchecked(config);
       const agents = seatAgents(
         Array.from({ length: playerCount }, (_, n) => new RandomAgent(`bot${n}`, seed * 100 + n)),
       );
+      const master = await runMatch(
+        createGame({ seed, playerCount, presetId: args.preset }),
+        agents,
+        { verifyInvariants: true },
+      );
 
-      const final = await runMatch(state, agents, { verifyInvariants: true });
       games += 1;
-      totalRounds += final.round;
+      totalRounds += master.round();
 
       if (args.verbose) {
-        for (const e of final.log) {
+        for (const e of master.log()) {
           const line = describe(e);
           if (line) console.log(line);
         }
-        report(final);
+        report(master.snapshot());
       }
     }
   }

@@ -12,6 +12,8 @@ export const WARLORD_DESTROY = 'warlord.destroy';
  * 파괴로 상대를 눌러둔 뒤 수입을 받을 수도 있다.
  */
 export const warlord: GameHooks = {
+  incomeKind: 'military',
+
   turnActions: (ctx) => [
     ...abilityOption(ctx, WARLORD_INCOME),
     ...(destroyTargets(ctx.state, ctx.self).length > 0 ? abilityOption(ctx, WARLORD_DESTROY) : []),

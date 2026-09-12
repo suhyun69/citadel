@@ -6,7 +6,7 @@ import type { CardId, PlayerId } from '../state/ids';
 import type { GameState } from '../state/game-state';
 import { holderOf } from './characters/_shared';
 import { LABORATORY_GOLD } from './buildings/laboratory';
-import { placeBuilding } from '../phases/turn';
+import { placeBuilding } from '../flow/turn';
 import type { UniqueBuildingId } from '@/data/types';
 
 /**

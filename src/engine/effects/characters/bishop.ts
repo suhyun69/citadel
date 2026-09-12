@@ -10,6 +10,8 @@ export const BISHOP_INCOME = 'bishop.income';
  * **도시 전체**에 걸린다는 점이 외성과 다르다.
  */
 export const bishop: GameHooks = {
+  incomeKind: 'religious',
+
   immuneToRank8: (_entry, ctx) => !isKilled(ctx),
 
   turnActions: (ctx) => abilityOption(ctx, BISHOP_INCOME),

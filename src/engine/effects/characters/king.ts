@@ -11,6 +11,8 @@ export const KING_INCOME = 'king.income';
  * 왕관만 가져간다(howto.md:298).
  */
 export const king: GameHooks = {
+  incomeKind: 'noble',
+
   onTurnStart(ctx) {
     if (ctx.state.crowned === ctx.self) return;
     ctx.state.crowned = ctx.self;

@@ -1,7 +1,7 @@
 import type { Agent } from '@/bot/agent';
 import { HeuristicAgent, POLICIES } from '@/bot/heuristic';
 import { RandomAgent } from '@/bot/random';
-import { createMatch, matchConfig } from '@/engine/setup';
+import { createGame } from '@/engine';
 import { playerId, type PlayerId } from '@/engine/state/ids';
 import type { GameState } from '@/engine/state/game-state';
 import { runMatch } from '@/runtime/runner';
@@ -50,7 +50,7 @@ export class MatchController {
 
   constructor(setup: MatchSetup = DEFAULT_SETUP) {
     this.#snapshot = {
-      state: createMatch(matchConfig(setup)),
+      state: createGame(setup).snapshot(),
       setup,
       paused: false,
       speedMs: this.#pacer.speedMs,
@@ -108,20 +108,20 @@ export class MatchController {
     this.#pacer = new Pacer();
     this.#pacer.speedMs = this.#snapshot.speedMs;
 
-    const initial = createMatch(matchConfig(next));
-    this.#emit({ state: initial, setup: next, running: true, paused: false });
+    const master = createGame(next);
+    this.#emit({ state: master.snapshot(), setup: next, running: true, paused: false });
 
     const agents = new Map<PlayerId, Agent>();
     for (let i = 0; i < next.playerCount; i++) {
       agents.set(playerId(i), makeAgent(next.botKind, `${next.botKind}${i}`, next.seed * 100 + i));
     }
 
-    void runMatch(initial, agents, {
+    void runMatch(master, agents, {
       clock: this.#pacer,
       stepDelayMs: 1, // 실제 대기 길이는 Pacer 가 정한다
-      onState: (state) => {
+      onProgress: (gm) => {
         if (generation !== this.#generation) throw new Aborted();
-        this.#emit({ state });
+        this.#emit({ state: gm.snapshot() });
       },
     })
       .then(() => {

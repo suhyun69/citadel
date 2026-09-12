@@ -11,6 +11,8 @@ export const MERCHANT_INCOME = 'merchant.income';
  * 상업 수입을 받으면 방금 지은 상업 건물까지 세어진다. 합쳐두면 그 선택이 사라진다.
  */
 export const merchant: GameHooks = {
+  incomeKind: 'trade',
+
   turnActions: (ctx) => [
     ...abilityOption(ctx, MERCHANT_BONUS),
     ...abilityOption(ctx, MERCHANT_INCOME),

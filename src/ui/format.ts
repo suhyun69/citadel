@@ -81,13 +81,13 @@ export function formatEvent(e: GameEvent): FormattedEvent | null {
       return {
         actor: e.player,
         tag: e.reason,
-        detail: e.gold ? `+금화 ${e.gold}` : `+카드 ${e.cards}`,
+        detail: e.gold ? `금화 +${e.gold}` : `카드 +${e.cards}`,
         depth: 2,
         tone: 'good',
       };
 
     case 'paid':
-      return { actor: e.player, tag: e.reason, detail: `−금화 ${e.gold}`, depth: 2 };
+      return { actor: e.player, tag: e.reason, detail: `금화 −${e.gold}`, depth: 2 };
 
     case 'built':
       return {

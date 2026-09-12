@@ -34,7 +34,7 @@ export function grantKindIncome(ctx: EffectCtx, kind: BuildingKind, ability: str
   const p = ctx.state.players[ctx.self];
   if (!p) return;
   p.gold += n;
-  ctx.push({ t: 'gained', player: ctx.self, gold: n, reason: `${KIND_LABEL_KO[kind]} 수입` });
+  ctx.push({ t: 'gained', player: ctx.self, gold: n, reason: `세금(${KIND_LABEL_KO[kind]})` });
 }
 
 /** 이번 게임에 쓰이는 캐릭터 전부. */

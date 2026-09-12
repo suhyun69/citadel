@@ -1,38 +1,43 @@
 import { describe, expect, it } from 'vitest';
-import { applyChoice, step } from '@/engine/machine';
+import type { GameMaster } from '@/engine';
 import { scoreFor } from '@/engine/flow/scoring';
 import { checkInvariants } from '@/engine/rules/invariants';
 import { destroyTargets } from '@/engine/rules/rank8';
 import { playerId } from '@/engine/state/ids';
-import type { GameState } from '@/engine/state/game-state';
-import type { MainAction } from '@/engine/state/prompt';
+import type { Choice, MainAction } from '@/engine/state/prompt';
 import type { UniqueBuildingId } from '@/data/types';
 import { aGame, card } from './helpers/builder';
 
-function toPending(s: GameState): GameState {
-  let cur = s;
-  while (!cur.pending && cur.phase !== 'finished') cur = step(cur);
-  return cur;
+function toPrompt(gm: GameMaster): GameMaster {
+  while (!gm.awaiting() && !gm.isOver()) gm.advance();
+  return gm;
 }
 
-function act(s: GameState, action: MainAction): GameState {
-  const cur = toPending(s);
-  expect(cur.pending?.type).toBe('mainAction');
-  return applyChoice(cur, { type: 'mainAction', action });
+function answer(gm: GameMaster, choice: Choice): GameMaster {
+  const player = toPrompt(gm).awaiting();
+  expect(player, '아무도 답을 기다리고 있지 않습니다').not.toBeNull();
+  const verdict = player!.submit(choice);
+  expect(verdict.ok ? null : verdict.reason).toBeNull();
+  return gm;
 }
 
-const useAbility = (s: GameState, ability: string) => act(s, { t: 'useAbility', ability });
-const useBuilding = (s: GameState, building: UniqueBuildingId) =>
-  act(s, { t: 'useBuilding', building });
+function act(gm: GameMaster, action: MainAction): GameMaster {
+  expect(toPrompt(gm).awaiting()?.prompt()?.type).toBe('mainAction');
+  return answer(gm, { type: 'mainAction', action });
+}
+
+const useAbility = (gm: GameMaster, ability: string) => act(gm, { t: 'useAbility', ability });
+const useBuilding = (gm: GameMaster, building: UniqueBuildingId) =>
+  act(gm, { t: 'useBuilding', building });
 
 /** 지금 차례 메뉴의 선택지. */
-function menuOptions(s: GameState): readonly MainAction[] {
-  const p = toPending(s).pending;
-  return p?.type === 'mainAction' ? p.options : [];
+function menuOptions(gm: GameMaster): readonly MainAction[] {
+  const prompt = toPrompt(gm).awaiting()?.prompt();
+  return prompt?.type === 'mainAction' ? prompt.options : [];
 }
 
-const canUseBuilding = (s: GameState, id: UniqueBuildingId): boolean =>
-  menuOptions(s).some((o) => o.t === 'useBuilding' && o.building === id);
+const canUseBuilding = (gm: GameMaster, id: UniqueBuildingId): boolean =>
+  menuOptions(gm).some((o) => o.t === 'useBuilding' && o.building === id);
 
 /**
  * ★ 이 파일에서 가장 중요한 묶음.
@@ -55,15 +60,15 @@ describe('마법학교와 유령 지구는 정반대다', () => {
   ];
 
   it('마법학교는 수입을 늘린다 (상인의 상업 건물로 세어진다)', () => {
-    let s = aGame()
+    const s = aGame()
       .players(4)
       .player(0, { gold: 0, city: cityWith('school_of_magic') })
       .assign(0, 'merchant')
       .atTurn(0)
       .build();
 
-    s = useAbility(s, 'merchant.income');
-    expect(s.players[0]!.gold).toBe(1); // 마법학교를 상업으로 세어 1닢
+    useAbility(s, 'merchant.income');
+    expect(s.snapshot().players[0]!.gold).toBe(1); // 마법학교를 상업으로 세어 1닢
   });
 
   it('마법학교는 5종 보너스를 채우지 못한다', () => {
@@ -75,7 +80,7 @@ describe('마법학교와 유령 지구는 정반대다', () => {
       .build();
 
     // 종교·군사·귀족·특수만 있고 상업이 없다 — 마법학교가 메워주면 안 된다
-    expect(scoreFor(s, playerId(0)).allKindsBonus).toBe(0);
+    expect(scoreFor(s.snapshot(), playerId(0)).allKindsBonus).toBe(0);
   });
 
   it('유령 지구는 5종 보너스를 채운다', () => {
@@ -86,19 +91,19 @@ describe('마법학교와 유령 지구는 정반대다', () => {
       .atTurn(0)
       .build();
 
-    expect(scoreFor(s, playerId(0)).allKindsBonus).toBe(3);
+    expect(scoreFor(s.snapshot(), playerId(0)).allKindsBonus).toBe(3);
   });
 
   it('유령 지구는 수입을 늘리지 못한다', () => {
-    let s = aGame()
+    const s = aGame()
       .players(4)
       .player(0, { gold: 0, city: cityWith('ghost_district') })
       .assign(0, 'merchant')
       .atTurn(0)
       .build();
 
-    s = useAbility(s, 'merchant.income');
-    expect(s.players[0]!.gold).toBe(0);
+    useAbility(s, 'merchant.income');
+    expect(s.snapshot().players[0]!.gold).toBe(0);
   });
 });
 
@@ -113,7 +118,7 @@ describe('유령 지구 × 소원의 우물', () => {
       .atTurn(0)
       .build();
 
-    const score = scoreFor(s, playerId(0));
+    const score = scoreFor(s.snapshot(), playerId(0));
     // 유령 지구를 상업으로 → 5종 3점, 특수는 소원의 우물 하나뿐이라 1점
     expect(score.allKindsBonus).toBe(3);
     expect(score.uniqueBonus).toBe(1);
@@ -130,7 +135,7 @@ describe('유령 지구 × 소원의 우물', () => {
       .atTurn(0)
       .build();
 
-    const score = scoreFor(s, playerId(0));
+    const score = scoreFor(s.snapshot(), playerId(0));
     expect(score.allKindsBonus).toBe(0); // 어차피 5종을 못 채운다
     // 소원의 우물 4 (유령 지구 포함) + 드래곤 게이트 2 + 동상 0(왕관 없음)
     expect(score.uniqueBonus).toBe(4 + 2);
@@ -139,21 +144,21 @@ describe('유령 지구 × 소원의 우물', () => {
 
 describe('도서관', () => {
   it('자원 얻기로 뽑은 카드를 전부 손에 든다', () => {
-    let s = aGame()
+    const s = aGame()
       .players(4)
       .player(0, { city: [card('library')] })
       .assign(0, 'merchant')
       .atTurn(0, 'gather')
       .build();
 
-    s = toPending(s);
-    expect(s.pending?.type).toBe('gatherMode');
-    s = applyChoice(s, { type: 'gatherMode', mode: 'cards' });
+    toPrompt(s);
+    expect(s.awaiting()?.prompt()?.type).toBe('gatherMode');
+    answer(s, { type: 'gatherMode', mode: 'cards' });
 
     // keep === draw 이므로 고를 것이 없어 pending 없이 바로 손에 들어온다
-    s = toPending(s);
-    expect(s.players[0]!.hand).toHaveLength(2);
-    expect(checkInvariants(s)).toEqual([]);
+    toPrompt(s);
+    expect(s.snapshot().players[0]!.hand).toHaveLength(2);
+    expect(checkInvariants(s.snapshot())).toEqual([]);
   });
 });
 
@@ -167,11 +172,11 @@ describe('공장과 도적 소굴', () => {
       .build();
 
     const after = act(s, { t: 'build', card: card('statue') });
-    expect(after.players[0]!.gold).toBe(8); // 동상 3닢 − 1
+    expect(after.snapshot().players[0]!.gold).toBe(8); // 동상 3닢 − 1
   });
 
   it('도적 소굴은 건설비용을 카드로 낼 수 있고, 자기 자신으로는 낼 수 없다', () => {
-    let s = aGame()
+    const s = aGame()
       .players(4)
       .player(0, {
         gold: 2,
@@ -181,25 +186,25 @@ describe('공장과 도적 소굴', () => {
       .atTurn(0)
       .build();
 
-    s = act(s, { t: 'build', card: card('thieves_den') });
-    expect(s.pending?.type).toBe('buildPayment');
-    expect(s.pending).toMatchObject({ cost: 6, maxCards: 4 });
+    act(s, { t: 'build', card: card('thieves_den') });
+    expect(s.awaiting()?.prompt()?.type).toBe('buildPayment');
+    expect(s.awaiting()?.prompt()).toMatchObject({ cost: 6, maxCards: 4 });
 
     // 자기 자신을 지불에 넣으면 거부된다
     expect(() =>
-      applyChoice(s, { type: 'buildPayment', gold: 2, cards: [card('thieves_den'), card('temple'), card('chapel'), card('manor')] }),
+      answer(s, { type: 'buildPayment', gold: 2, cards: [card('thieves_den'), card('temple'), card('chapel'), card('manor')] }),
     ).toThrow();
 
-    s = applyChoice(s, {
+    answer(s, {
       type: 'buildPayment',
       gold: 2,
       cards: [card('temple'), card('chapel'), card('manor'), card('castle')],
     });
 
-    expect(s.players[0]!.gold).toBe(0);
-    expect(s.players[0]!.city.map((e) => e.card)).toEqual([card('thieves_den')]);
-    expect(s.players[0]!.hand).toHaveLength(0);
-    expect(checkInvariants(s)).toEqual([]);
+    expect(s.snapshot().players[0]!.gold).toBe(0);
+    expect(s.snapshot().players[0]!.city.map((e) => e.card)).toEqual([card('thieves_den')]);
+    expect(s.snapshot().players[0]!.hand).toHaveLength(0);
+    expect(checkInvariants(s.snapshot())).toEqual([]);
   });
 
   it('공장이 있으면 도적 소굴 비용도 5닢으로 줄어든다', () => {
@@ -211,22 +216,22 @@ describe('공장과 도적 소굴', () => {
       .build();
 
     const after = act(s, { t: 'build', card: card('thieves_den') });
-    expect(after.pending).toMatchObject({ cost: 5, maxCards: 1 });
+    expect(after.awaiting()?.prompt()).toMatchObject({ cost: 5, maxCards: 1 });
   });
 });
 
 describe('채석장', () => {
   it('이름이 같은 건물을 또 지을 수 있다', () => {
-    let s = aGame()
+    const s = aGame()
       .players(4)
       .player(0, { gold: 5, hand: [card('temple', 2)], city: [card('temple', 1), card('quarry')] })
       .assign(0, 'merchant')
       .atTurn(0)
       .build();
 
-    s = act(s, { t: 'build', card: card('temple', 2) });
-    expect(s.players[0]!.city).toHaveLength(3);
-    expect(checkInvariants(s)).toEqual([]);
+    act(s, { t: 'build', card: card('temple', 2) });
+    expect(s.snapshot().players[0]!.city).toHaveLength(3);
+    expect(checkInvariants(s.snapshot())).toEqual([]);
   });
 
   it('동명 건물이 5종 보너스에서 두 번 세어지지 않는다', () => {
@@ -240,7 +245,7 @@ describe('채석장', () => {
       .build();
 
     // 종교·군사·귀족·특수 — 상업이 없다
-    expect(scoreFor(s, playerId(0)).allKindsBonus).toBe(0);
+    expect(scoreFor(s.snapshot(), playerId(0)).allKindsBonus).toBe(0);
   });
 });
 
@@ -255,44 +260,44 @@ describe('외성', () => {
       .atTurn(0)
       .build();
 
-    const targets = destroyTargets(s, playerId(0));
+    const targets = destroyTargets(s.snapshot(), playerId(0));
     expect(targets.map((t) => t.card)).toEqual([card('prison')]);
   });
 });
 
 describe('차례마다 한 번 쓰는 건물', () => {
   it('실험실: 카드 1장을 버리고 금화 2닢을 받는다', () => {
-    let s = aGame()
+    const s = aGame()
       .players(4)
       .player(0, { gold: 0, hand: [card('temple')], city: [card('laboratory')] })
       .assign(0, 'merchant')
       .atTurn(0)
       .build();
 
-    s = useBuilding(s, 'laboratory');
-    expect(s.pending?.type).toBe('discardCard');
-    s = applyChoice(s, { type: 'discardCard', card: card('temple') });
+    useBuilding(s, 'laboratory');
+    expect(s.awaiting()?.prompt()?.type).toBe('discardCard');
+    answer(s, { type: 'discardCard', card: card('temple') });
 
-    expect(s.players[0]!.gold).toBe(2);
-    expect(s.players[0]!.hand).toHaveLength(0);
-    expect(s.deck.at(-1)).toBe(card('temple'));
+    expect(s.snapshot().players[0]!.gold).toBe(2);
+    expect(s.snapshot().players[0]!.hand).toHaveLength(0);
+    expect(s.snapshot().deck.at(-1)).toBe(card('temple'));
 
     // 같은 차례에 두 번은 못 쓴다 (손패도 없다)
     expect(canUseBuilding(s, 'laboratory')).toBe(false);
   });
 
   it('대장간: 금화 2닢을 내고 카드 3장을 받는다', () => {
-    let s = aGame()
+    const s = aGame()
       .players(4)
       .player(0, { gold: 3, city: [card('smithy')] })
       .assign(0, 'merchant')
       .atTurn(0)
       .build();
 
-    s = useBuilding(s, 'smithy');
-    expect(s.players[0]!.gold).toBe(1);
-    expect(s.players[0]!.hand).toHaveLength(3);
-    expect(checkInvariants(s)).toEqual([]);
+    useBuilding(s, 'smithy');
+    expect(s.snapshot().players[0]!.gold).toBe(1);
+    expect(s.snapshot().players[0]!.hand).toHaveLength(3);
+    expect(checkInvariants(s.snapshot())).toEqual([]);
 
     expect(canUseBuilding(s, 'smithy')).toBe(false);
   });
@@ -322,7 +327,7 @@ describe('게임 종료 점수', () => {
       .atTurn(0)
       .build();
 
-    expect(scoreFor(s, playerId(0)).uniqueBonus).toBe(7 + 2);
+    expect(scoreFor(s.snapshot(), playerId(0)).uniqueBonus).toBe(7 + 2);
   });
 
   it('동상은 왕관을 가지고 있을 때만 5점을 준다', () => {
@@ -341,8 +346,8 @@ describe('게임 종료 점수', () => {
       .atTurn(0)
       .build();
 
-    expect(scoreFor(withCrown, playerId(0)).uniqueBonus).toBe(5);
-    expect(scoreFor(without, playerId(0)).uniqueBonus).toBe(0);
+    expect(scoreFor(withCrown.snapshot(), playerId(0)).uniqueBonus).toBe(5);
+    expect(scoreFor(without.snapshot(), playerId(0)).uniqueBonus).toBe(0);
   });
 
   it('드래곤 게이트는 무조건 2점', () => {
@@ -352,6 +357,6 @@ describe('게임 종료 점수', () => {
       .assign(0, 'merchant')
       .atTurn(0)
       .build();
-    expect(scoreFor(s, playerId(0)).uniqueBonus).toBe(2);
+    expect(scoreFor(s.snapshot(), playerId(0)).uniqueBonus).toBe(2);
   });
 });

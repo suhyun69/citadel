@@ -1,7 +1,7 @@
 import type { Agent } from '@/bot/agent';
 import { HeuristicAgent, POLICIES } from '@/bot/heuristic';
 import { RandomAgent } from '@/bot/random';
-import { createMatch, matchConfig } from '@/engine/setup';
+import { createGame } from '@/engine';
 import { playerId } from '@/engine/state/ids';
 import { runMatch } from '@/runtime/runner';
 
@@ -32,13 +32,12 @@ export async function arena(
 
   for (let g = 0; g < games; g++) {
     const seat = g % playerCount;
-    const config = matchConfig({ seed: g, playerCount });
     const agents = new Map<ReturnType<typeof playerId>, Agent>();
     for (let i = 0; i < playerCount; i++) {
       agents.set(playerId(i), makeAgent(i === seat ? a : b, g * 100 + i));
     }
-    const final = await runMatch(createMatch(config), agents);
-    if (final.result?.winner === seat) aWins += 1;
+    const master = await runMatch(createGame({ seed: g, playerCount }), agents);
+    if (master.result()?.winner === seat) aWins += 1;
   }
 
   return { games, aWins, winRate: aWins / games };

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { HeuristicAgent } from '@/bot/heuristic';
 import { checkInvariants } from '@/engine/rules/invariants';
-import { createMatch, matchConfig } from '@/engine/setup';
+import { createGame } from '@/engine';
 import { playerId } from '@/engine/state/ids';
 import { runMatch } from '@/runtime/runner';
 import { playRandomGame } from './helpers/run';
@@ -25,22 +25,22 @@ describe(`랜덤봇 퍼즈 (${SEEDS}시드 × ${PLAYER_COUNTS.length}인원 = ${
       for (let seed = 0; seed < SEEDS; seed++) {
         const final = await playRandomGame({ seed, playerCount, verifyInvariants: true });
 
-        expect(checkInvariants(final), `seed=${seed}`).toEqual([]);
-        expect(final.phase, `seed=${seed}`).toBe('finished');
-        expect(final.round, `seed=${seed}`).toBeLessThanOrEqual(final.config.maxRounds);
-        expect(final.result, `seed=${seed}`).not.toBeNull();
+        expect(checkInvariants(final.snapshot()), `seed=${seed}`).toEqual([]);
+        expect(final.phase(), `seed=${seed}`).toBe('finished');
+        expect(final.round(), `seed=${seed}`).toBeLessThanOrEqual(final.snapshot().config.maxRounds);
+        expect(final.result(), `seed=${seed}`).not.toBeNull();
 
         // 도시를 완성한 플레이어가 반드시 있어야 게임이 끝난다
         expect(
-          final.players.some((p) => p.cityCompletedAtRound !== null),
+          final.snapshot().players.some((p) => p.cityCompletedAtRound !== null),
           `seed=${seed}`,
         ).toBe(true);
 
         // 점수는 전부 유한하고, 승자는 최고점이다
-        const top = Math.max(...final.result!.scores.map((s) => s.total));
-        const winner = final.result!.scores.find((s) => s.player === final.result!.winner)!;
+        const top = Math.max(...final.result()!.scores.map((s) => s.total));
+        const winner = final.result()!.scores.find((s) => s.player === final.result()!.winner)!;
         expect(winner.total, `seed=${seed}`).toBe(top);
-        for (const s of final.result!.scores) expect(Number.isFinite(s.total)).toBe(true);
+        for (const s of final.result()!.scores) expect(Number.isFinite(s.total)).toBe(true);
       }
     });
   }
@@ -55,16 +55,15 @@ describe('휴리스틱 봇 퍼즈', () => {
   it('실전에 가까운 진행에서도 불변식이 유지된다', async () => {
     for (let seed = 0; seed < 50; seed++) {
       for (const playerCount of [4, 7]) {
-        const config = matchConfig({ seed, playerCount });
         const agents = new Map(
           Array.from({ length: playerCount }, (_, i) => [
             playerId(i),
             new HeuristicAgent(`h${i}`, seed * 100 + i),
           ]),
         );
-        const final = await runMatch(createMatch(config), agents, { verifyInvariants: true });
-        expect(checkInvariants(final), `seed=${seed} players=${playerCount}`).toEqual([]);
-        expect(final.phase).toBe('finished');
+        const final = await runMatch(createGame({ seed, playerCount }), agents, { verifyInvariants: true });
+        expect(checkInvariants(final.snapshot()), `seed=${seed} players=${playerCount}`).toEqual([]);
+        expect(final.phase()).toBe('finished');
       }
     }
   }, 120_000);

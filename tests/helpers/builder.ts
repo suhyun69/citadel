@@ -1,5 +1,7 @@
 import { characterDef, type CharacterId } from '@/data/types';
 import { buildLimitFor } from '@/engine/flow/turn';
+import { gameFromState } from '@/engine';
+import type { GameMaster } from '@/engine';
 import { buildDeck, createMatchUnchecked, matchConfig } from '@/engine/setup';
 import { playerId, type CardId, type PlayerId } from '@/engine/state/ids';
 import type { GameState, TurnStage } from '@/engine/state/game-state';
@@ -58,7 +60,12 @@ export class GameBuilder {
     return this;
   }
 
-  build(): GameState {
+  /** 조립한 상태에서 시작하는 게임 마스터. 원상태가 필요하면 snapshot() 을 쓴다. */
+  build(): GameMaster {
+    return gameFromState(this.#buildState());
+  }
+
+  #buildState(): GameState {
     const config = matchConfig({ seed: this.#seed, playerCount: this.#playerCount });
     const state = createMatchUnchecked(config);
 

@@ -1,8 +1,8 @@
 import { characterDef, type CharacterId } from '@/data/types';
 import { makeCtx } from '../effects/ctx';
 import { collectHooks } from '../effects/registry';
-import { playerId, type PlayerId } from '../types/ids';
-import type { GameState } from '../types/state';
+import { playerId, type PlayerId } from '../state/ids';
+import type { GameState } from '../state/game-state';
 import { startTurn } from './turn';
 
 export function maxRank(state: GameState): number {

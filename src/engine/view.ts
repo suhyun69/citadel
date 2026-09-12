@@ -1,7 +1,7 @@
 import type { CharacterId } from '@/data/types';
-import type { GameEvent } from './types/event';
-import { playerId, type CardId, type PlayerId } from './types/ids';
-import type { CharacterSlot, CityEntry, GameState, MatchConfig } from './types/state';
+import type { GameEvent } from './state/event';
+import { playerId, type CardId, type PlayerId } from './state/ids';
+import type { CharacterSlot, CityEntry, GameState, MatchConfig } from './state/game-state';
 
 /**
  * 한 플레이어가 볼 수 있는 것만 남긴 상태.

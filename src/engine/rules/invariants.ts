@@ -1,6 +1,6 @@
 import { buildDeck } from '../setup';
-import { defIdOf, type CardId } from '../types/ids';
-import type { GameState, MatchConfig } from '../types/state';
+import { defIdOf, type CardId } from '../state/ids';
+import type { GameState, MatchConfig } from '../state/game-state';
 
 /**
  * 개발 모드에서 매 step 마다 검사하는 불변식.

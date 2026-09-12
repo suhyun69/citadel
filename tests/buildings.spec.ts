@@ -3,9 +3,9 @@ import { applyChoice, step } from '@/engine/machine';
 import { scoreFor } from '@/engine/phases/scoring';
 import { checkInvariants } from '@/engine/rules/invariants';
 import { destroyTargets } from '@/engine/rules/rank8';
-import { playerId } from '@/engine/types/ids';
-import type { GameState } from '@/engine/types/state';
-import type { MainAction } from '@/engine/types/decision';
+import { playerId } from '@/engine/state/ids';
+import type { GameState } from '@/engine/state/game-state';
+import type { MainAction } from '@/engine/state/prompt';
 import type { UniqueBuildingId } from '@/data/types';
 import { aGame, card } from './helpers/builder';
 

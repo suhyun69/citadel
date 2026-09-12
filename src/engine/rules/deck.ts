@@ -1,6 +1,6 @@
-import type { GameEvent } from '../types/event';
-import type { CardId } from '../types/ids';
-import type { GameState } from '../types/state';
+import type { GameEvent } from '../state/event';
+import type { CardId } from '../state/ids';
+import type { GameState } from '../state/game-state';
 
 /**
  * 건물 카드 더미에서 뽑는다. 앞에서 뽑고 뒤로 넣는다.

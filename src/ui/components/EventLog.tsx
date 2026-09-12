@@ -1,7 +1,7 @@
 'use client';
 
 import { memo, useEffect, useRef } from 'react';
-import type { GameEvent } from '@/engine/types/event';
+import type { GameEvent } from '@/engine/state/event';
 import { formatEvent } from '../format';
 
 const Row = memo(function Row({ event }: { event: GameEvent }) {

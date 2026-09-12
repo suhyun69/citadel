@@ -1,9 +1,9 @@
 import type { Agent } from '@/bot/agent';
 import { applyChoice, isOver, step } from '@/engine/machine';
 import { assertInvariants } from '@/engine/rules/invariants';
-import type { AnyChoice } from '@/engine/types/decision';
-import type { PlayerId } from '@/engine/types/ids';
-import type { GameState } from '@/engine/types/state';
+import type { Choice } from '@/engine/state/prompt';
+import type { PlayerId } from '@/engine/state/ids';
+import type { GameState } from '@/engine/state/game-state';
 import { viewFor } from '@/engine/view';
 
 /** 봇 연출 딜레이를 주입으로 받는다. 엔진에는 setTimeout 이 들어가지 않는다. */
@@ -26,7 +26,7 @@ export interface RunOptions {
   /** 무한 루프 방지. 정상 게임은 한참 못 미친다. */
   maxSteps?: number;
   /** 재현용 선택 로그를 여기에 쌓는다. */
-  choiceLog?: AnyChoice[];
+  choiceLog?: Choice[];
 }
 
 /**
@@ -56,8 +56,8 @@ export async function runMatch(
       const agent = agents.get(d.player);
       if (!agent) throw new Error(`P${d.player} 를 맡은 에이전트가 없습니다`);
 
-      const choice = (await agent.decide(viewFor(state, d.player), d)) as AnyChoice;
-      const withType = { ...choice, type: d.type } as AnyChoice;
+      const choice = (await agent.decide(viewFor(state, d.player), d)) as Choice;
+      const withType = { ...choice, type: d.type } as Choice;
       opts.choiceLog?.push(withType);
       state = applyChoice(state, withType);
 

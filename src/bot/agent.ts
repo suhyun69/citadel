@@ -1,5 +1,5 @@
-import type { AnyChoice, ChoiceOf, PendingDecision } from '@/engine/types/decision';
-import type { GameEvent } from '@/engine/types/event';
+import type { Choice, ChoiceOf, Prompt } from '@/engine/state/prompt';
+import type { GameEvent } from '@/engine/state/event';
 import type { PlayerView } from '@/engine/view';
 
 /**
@@ -11,18 +11,18 @@ import type { PlayerView } from '@/engine/view';
  */
 export interface Agent {
   readonly name: string;
-  decide<D extends PendingDecision>(view: PlayerView, decision: D): Promise<ChoiceOf<D>>;
+  decide<D extends Prompt>(view: PlayerView, decision: D): Promise<ChoiceOf<D>>;
   /** 매 전이 후 관측. 선택 사항. */
   observe?(events: readonly GameEvent[], view: PlayerView): void;
 }
 
-export type DecideFn = (view: PlayerView, decision: PendingDecision) => AnyChoice;
+export type DecideFn = (view: PlayerView, decision: Prompt) => Choice;
 
 /** 동기 결정 함수를 Agent 로 감싼다. */
 export function syncAgent(name: string, decide: DecideFn): Agent {
   return {
     name,
-    decide: <D extends PendingDecision>(view: PlayerView, d: D) =>
+    decide: <D extends Prompt>(view: PlayerView, d: D) =>
       Promise.resolve(decide(view, d) as ChoiceOf<D>),
   };
 }

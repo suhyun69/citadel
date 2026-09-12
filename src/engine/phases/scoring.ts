@@ -2,8 +2,8 @@ import { BUILDING_KINDS, characterDef, type BuildingKind } from '@/data/types';
 import { makeScoreCtx } from '../effects/ctx';
 import { collectHooks } from '../effects/registry';
 import { cityCost } from '../rules/build';
-import { defOf, playerId, type PlayerId } from '../types/ids';
-import type { CityEntry, GameState, MatchResult, PlayerScore } from '../types/state';
+import { defOf, playerId, type PlayerId } from '../state/ids';
+import type { CityEntry, GameState, MatchResult, PlayerScore } from '../state/game-state';
 
 export const ALL_KINDS_BONUS = 3;
 export const FIRST_COMPLETE_BONUS = 4;

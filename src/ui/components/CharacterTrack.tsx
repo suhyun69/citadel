@@ -1,7 +1,7 @@
 'use client';
 
 import { characterDef } from '@/data/types';
-import type { GameState } from '@/engine/types/state';
+import type { GameState } from '@/engine/state/game-state';
 
 /** 순번 1~8 트랙. 누가 무엇을 들고 있는지는 공개된 것만 보여준다. */
 export function CharacterTrack({ state }: { state: GameState }) {

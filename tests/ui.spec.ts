@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { HeuristicAgent } from '@/bot/heuristic';
 import { createMatch, matchConfig } from '@/engine/setup';
-import { playerId } from '@/engine/types/ids';
+import { playerId } from '@/engine/state/ids';
 import { runMatch } from '@/runtime/runner';
 import { formatEvent } from '@/ui/format';
 import { Pacer } from '@/ui/pacer';

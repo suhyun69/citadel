@@ -1,7 +1,7 @@
 import type { CharacterId, PresetDef, UniqueBuildingId } from '@/data/types';
-import { defIdOf } from '../types/ids';
-import type { PlayerId } from '../types/ids';
-import type { GameState } from '../types/state';
+import { defIdOf } from '../state/ids';
+import type { PlayerId } from '../state/ids';
+import type { GameState } from '../state/game-state';
 import type { GameHooks, HookSource } from './hooks';
 import { architect } from './characters/architect';
 import { assassin } from './characters/assassin';

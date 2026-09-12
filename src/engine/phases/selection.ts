@@ -6,8 +6,8 @@ import {
   discardCounts,
 } from '../rules/selection-table';
 import { seatOrder } from '../setup';
-import type { PendingDecision } from '../types/decision';
-import type { GameState, SelectionState } from '../types/state';
+import type { Prompt } from '../state/prompt';
+import type { GameState, SelectionState } from '../state/game-state';
 
 /** 라운드 시작: 캐릭터를 섞고 정해진 수만큼 버린다. */
 export function startSelection(state: GameState): void {
@@ -66,14 +66,14 @@ export function selectionOptions(state: GameState, sel: SelectionState): Charact
   return options;
 }
 
-export function selectionPending(state: GameState, sel: SelectionState): PendingDecision {
+export function selectionPending(state: GameState, sel: SelectionState): Prompt {
   const player = sel.order[sel.cursor];
   if (player === undefined) throw new Error('선택 단계 커서가 범위를 벗어났습니다');
   const options = selectionOptions(state, sel);
   return {
     type: 'selectCharacter',
     player,
-    prompt: `캐릭터를 1장 고르세요 (${options.length}장 중)`,
+    text: `캐릭터를 1장 고르세요 (${options.length}장 중)`,
     options,
     poolSize: options.length,
   };

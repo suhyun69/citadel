@@ -25,9 +25,9 @@ import {
 } from './effects/resolvers';
 import { isLegal } from './query';
 import type { UniqueBuildingId } from '@/data/types';
-import type { AnyChoice } from './types/decision';
-import type { CardId } from './types/ids';
-import type { GameState } from './types/state';
+import type { Choice } from './state/prompt';
+import type { CardId } from './state/ids';
+import type { GameState } from './state/game-state';
 
 // 상태를 얼려 두면 실수로 draft 밖에서 변형하는 버그가 즉시 드러난다.
 setAutoFreeze(true);
@@ -112,7 +112,7 @@ function advanceAction(s: GameState): void {
 }
 
 /** 에이전트의 선택을 검증하고 반영한다. pending 을 비우고 돌려준다. */
-export function applyChoice(state: GameState, choice: AnyChoice): GameState {
+export function applyChoice(state: GameState, choice: Choice): GameState {
   const pending = state.pending;
   if (!pending) throw new Error('대기 중인 결정이 없습니다');
   if (pending.type !== choice.type) {

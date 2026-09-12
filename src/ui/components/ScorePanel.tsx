@@ -1,6 +1,6 @@
 'use client';
 
-import type { GameState } from '@/engine/types/state';
+import type { GameState } from '@/engine/state/game-state';
 
 export function ScorePanel({ state }: { state: GameState }) {
   const result = state.result;

@@ -1,8 +1,8 @@
 import { characterDef, type BuildingKind, type CharacterId } from '@/data/types';
 import { countIncome } from '../../rules/income';
-import type { MainAction } from '../../types/decision';
-import { playerId, type PlayerId } from '../../types/ids';
-import type { GameState } from '../../types/state';
+import type { MainAction } from '../../state/prompt';
+import { playerId, type PlayerId } from '../../state/ids';
+import type { GameState } from '../../state/game-state';
 import type { EffectCtx } from '../hooks';
 
 export const isUsed = (ctx: EffectCtx, ability: string): boolean =>

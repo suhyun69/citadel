@@ -1,7 +1,7 @@
 import { makeCtx } from '../effects/ctx';
 import { collectHooks } from '../effects/registry';
-import { defOf, playerId, type CardId, type PlayerId } from '../types/ids';
-import type { CityEntry, GameState } from '../types/state';
+import { defOf, playerId, type CardId, type PlayerId } from '../state/ids';
+import type { CityEntry, GameState } from '../state/game-state';
 import { isCityComplete } from './build';
 
 /**

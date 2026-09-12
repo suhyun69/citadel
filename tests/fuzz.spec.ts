@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { HeuristicAgent } from '@/bot/heuristic';
 import { checkInvariants } from '@/engine/rules/invariants';
 import { createMatch, matchConfig } from '@/engine/setup';
-import { playerId } from '@/engine/types/ids';
+import { playerId } from '@/engine/state/ids';
 import { runMatch } from '@/runtime/runner';
 import { playRandomGame } from './helpers/run';
 

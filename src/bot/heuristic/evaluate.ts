@@ -1,5 +1,5 @@
 import { BUILDING_KINDS, characterDef, type BuildingKind, type CharacterId } from '@/data/types';
-import { defOf, type CardId, type PlayerId } from '@/engine/types/ids';
+import { defOf, type CardId, type PlayerId } from '@/engine/state/ids';
 import type { PlayerView } from '@/engine/view';
 
 /** 내 도시에 이미 있는 건물 정의 id. 같은 이름은 (채석장 없이는) 못 짓는다. */

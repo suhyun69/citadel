@@ -1,7 +1,7 @@
 import { RandomAgent } from '@/bot/random';
 import { createMatchUnchecked, matchConfig } from '@/engine/setup';
-import type { AnyChoice } from '@/engine/types/decision';
-import type { GameState } from '@/engine/types/state';
+import type { Choice } from '@/engine/state/prompt';
+import type { GameState } from '@/engine/state/game-state';
 import { runMatch, seatAgents } from '@/runtime/runner';
 import type { PresetId } from '@/data/types';
 
@@ -10,7 +10,7 @@ export interface PlayOptions {
   playerCount: number;
   presetId?: PresetId;
   verifyInvariants?: boolean;
-  choiceLog?: AnyChoice[];
+  choiceLog?: Choice[];
 }
 
 /** 랜덤봇만으로 한 판 끝까지 돌린다. */

@@ -1,8 +1,8 @@
 import { buildingDef, isConstructible, type BuildingDef } from '@/data/types';
 import { BUILDING_EFFECTS, collectHooks } from '../effects/registry';
 import type { EffectCtx, GameHooks } from '../effects/hooks';
-import { defIdOf, defOf, type CardId, type PlayerId } from '../types/ids';
-import type { GameState } from '../types/state';
+import { defIdOf, defOf, type CardId, type PlayerId } from '../state/ids';
+import type { GameState } from '../state/game-state';
 
 /** 이 건물의 실제 건설비용 (공장 등 효과 반영). 음수로 내려가지 않는다. */
 export function buildCost(state: GameState, player: PlayerId, def: BuildingDef, ctx: EffectCtx): number {

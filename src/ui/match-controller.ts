@@ -2,8 +2,8 @@ import type { Agent } from '@/bot/agent';
 import { HeuristicAgent, POLICIES } from '@/bot/heuristic';
 import { RandomAgent } from '@/bot/random';
 import { createMatch, matchConfig } from '@/engine/setup';
-import { playerId, type PlayerId } from '@/engine/types/ids';
-import type { GameState } from '@/engine/types/state';
+import { playerId, type PlayerId } from '@/engine/state/ids';
+import type { GameState } from '@/engine/state/game-state';
 import { runMatch } from '@/runtime/runner';
 import { Aborted, Pacer } from './pacer';
 

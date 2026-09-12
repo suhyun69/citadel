@@ -2,8 +2,8 @@ import { ALL_BUILDINGS, buildingDef, characterDef, presetDef, type PresetId } fr
 import { missingCards } from './effects/registry';
 import { seedRng, shuffle } from './rng';
 import { MAX_PLAYERS, MIN_PLAYERS, discardCounts } from './rules/selection-table';
-import { cardId, playerId, type CardId, type PlayerId } from './types/ids';
-import type { GameState, MatchConfig, PlayerState } from './types/state';
+import { cardId, playerId, type CardId, type PlayerId } from './state/ids';
+import type { GameState, MatchConfig, PlayerState } from './state/game-state';
 
 export const STARTING_HAND = 4;
 export const STARTING_GOLD = 2;

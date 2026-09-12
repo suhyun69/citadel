@@ -1,6 +1,6 @@
 import { characterDef, type CharacterId } from '@/data/types';
-import { defOf, titleOf, type CardId } from '@/engine/types/ids';
-import type { GameEvent } from '@/engine/types/event';
+import { defOf, titleOf, type CardId } from '@/engine/state/ids';
+import type { GameEvent } from '@/engine/state/event';
 import type { BuildingKind } from '@/data/types';
 
 export const characterName = (id: CharacterId): string => characterDef(id).name;

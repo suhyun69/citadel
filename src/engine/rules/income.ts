@@ -1,8 +1,8 @@
 import type { BuildingKind } from '@/data/types';
 import { collectHooks } from '../effects/registry';
 import type { EffectCtx } from '../effects/hooks';
-import { defOf, type PlayerId } from '../types/ids';
-import type { GameState } from '../types/state';
+import { defOf, type PlayerId } from '../state/ids';
+import type { GameState } from '../state/game-state';
 
 /**
  * 종류별 수입 계산. 왕·주교·상인·장군 네 곳이 같은 로직을 쓰므로 훅이 아니라

@@ -1,7 +1,7 @@
 import type { UniqueBuildingId } from '@/data/types';
-import type { MainAction } from '../../types/decision';
-import { defIdOf } from '../../types/ids';
-import type { CityEntry } from '../../types/state';
+import type { MainAction } from '../../state/prompt';
+import { defIdOf } from '../../state/ids';
+import type { CityEntry } from '../../state/game-state';
 import type { EffectCtx } from '../hooks';
 
 /** 이 도시 엔트리가 그 특수 건물인가. 훅은 도시의 모든 건물에 대해 불린다. */

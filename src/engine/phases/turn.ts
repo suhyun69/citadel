@@ -3,9 +3,9 @@ import { makeCtx } from '../effects/ctx';
 import { collectHooks } from '../effects/registry';
 import { canBuild, isCityComplete } from '../rules/build';
 import { draw, returnToBottom } from '../rules/deck';
-import type { MainAction, PendingDecision } from '../types/decision';
-import { defIdOf, titleOf, type CardId, type PlayerId } from '../types/ids';
-import type { GameState, TurnState } from '../types/state';
+import type { MainAction, Prompt } from '../state/prompt';
+import { defIdOf, titleOf, type CardId, type PlayerId } from '../state/ids';
+import type { GameState, TurnState } from '../state/game-state';
 
 /** 자원 얻기 행동의 기본값 (howto.md:75). */
 export const GATHER_GOLD = 2;
@@ -56,12 +56,12 @@ export function startTurn(state: GameState, player: PlayerId, characterId: impor
   for (const h of collectHooks(state, player)) h.onTurnStart?.(ctx);
 }
 
-export function gatherPending(state: GameState, turn: TurnState): PendingDecision {
+export function gatherPending(state: GameState, turn: TurnState): Prompt {
   const plan = gatherPlan(state, turn.playerId);
   return {
     type: 'gatherMode',
     player: turn.playerId,
-    prompt: `자원 얻기: 금화 ${plan.gold}닢 또는 카드 ${plan.draw}장`,
+    text: `자원 얻기: 금화 ${plan.gold}닢 또는 카드 ${plan.draw}장`,
     goldAmount: plan.gold,
     drawCount: plan.draw,
   };
@@ -83,13 +83,13 @@ export function applyGatherMode(state: GameState, mode: 'gold' | 'cards'): void 
   }
 }
 
-export function keepDrawnPending(state: GameState, turn: TurnState): PendingDecision {
+export function keepDrawnPending(state: GameState, turn: TurnState): Prompt {
   const plan = gatherPlan(state, turn.playerId);
   const drawn = turn.drawn ?? [];
   return {
     type: 'keepDrawn',
     player: turn.playerId,
-    prompt: `뽑은 ${drawn.length}장 중 ${plan.keep}장을 손에 듭니다`,
+    text: `뽑은 ${drawn.length}장 중 ${plan.keep}장을 손에 듭니다`,
     drawn: [...drawn],
     keep: Math.min(plan.keep, drawn.length),
   };
@@ -136,11 +136,11 @@ export function mainActionOptions(state: GameState, turn: TurnState): MainAction
   return options;
 }
 
-export function mainActionPending(state: GameState, turn: TurnState): PendingDecision {
+export function mainActionPending(state: GameState, turn: TurnState): Prompt {
   return {
     type: 'mainAction',
     player: turn.playerId,
-    prompt: `${characterDef(turn.characterId).name} 차례: 무엇을 하시겠습니까?`,
+    text: `${characterDef(turn.characterId).name} 차례: 무엇을 하시겠습니까?`,
     options: mainActionOptions(state, turn),
   };
 }
@@ -158,7 +158,7 @@ export function applyBuild(state: GameState, card: CardId): void {
     ctx.ask({
       type: 'buildPayment',
       player: turn.playerId,
-      prompt: `${titleOf(card)} 건설비용 ${check.cost}닢을 금화와 카드로 나눠 냅니다`,
+      text: `${titleOf(card)} 건설비용 ${check.cost}닢을 금화와 카드로 나눠 냅니다`,
       card,
       cost: check.cost,
       maxCards: check.maxCards,

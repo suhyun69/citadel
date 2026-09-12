@@ -1,6 +1,6 @@
 import { legalChoices } from '@/engine/query';
 import { nextInt, seedRng, type RngState } from '@/engine/rng';
-import type { AnyChoice, ChoiceOf, PendingDecision } from '@/engine/types/decision';
+import type { Choice, ChoiceOf, Prompt } from '@/engine/state/prompt';
 import type { PlayerView } from '@/engine/view';
 import type { Agent } from '../agent';
 import { randomChoice } from '../random';
@@ -25,11 +25,11 @@ export class HeuristicAgent implements Agent {
     this.#rng = seedRng(seed);
   }
 
-  decide<D extends PendingDecision>(view: PlayerView, d: D): Promise<ChoiceOf<D>> {
+  decide<D extends Prompt>(view: PlayerView, d: D): Promise<ChoiceOf<D>> {
     return Promise.resolve(this.#pick(view, d) as ChoiceOf<D>);
   }
 
-  #pick(view: PlayerView, d: PendingDecision): AnyChoice {
+  #pick(view: PlayerView, d: Prompt): Choice {
     const built = this.policy.construct?.(view, d);
     if (built) return built;
 
@@ -40,7 +40,7 @@ export class HeuristicAgent implements Agent {
       return choice;
     }
 
-    let best: AnyChoice[] = [];
+    let best: Choice[] = [];
     let bestScore = -Infinity;
     let scored = false;
 
@@ -65,7 +65,7 @@ export class HeuristicAgent implements Agent {
     // 동점은 무작위로 갈라 결정론을 유지하면서 편향을 없앤다.
     const [i, rng] = nextInt(this.#rng, best.length);
     this.#rng = rng;
-    return best[i] as AnyChoice;
+    return best[i] as Choice;
   }
 }
 

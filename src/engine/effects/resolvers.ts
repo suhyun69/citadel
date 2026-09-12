@@ -1,9 +1,9 @@
 import type { CharacterId } from '@/data/types';
 import { draw, returnToBottom } from '../rules/deck';
 import { destroyPrice } from '../rules/rank8';
-import type { AnyChoice } from '../types/decision';
-import type { CardId, PlayerId } from '../types/ids';
-import type { GameState } from '../types/state';
+import type { Choice } from '../state/prompt';
+import type { CardId, PlayerId } from '../state/ids';
+import type { GameState } from '../state/game-state';
 import { holderOf } from './characters/_shared';
 import { LABORATORY_GOLD } from './buildings/laboratory';
 import { placeBuilding } from '../phases/turn';
@@ -41,7 +41,7 @@ export function resolveNamedCharacter(
 export function resolveMagicianMode(
   state: GameState,
   self: PlayerId,
-  choice: Extract<AnyChoice, { type: 'magicianMode' }>,
+  choice: Extract<Choice, { type: 'magicianMode' }>,
 ): void {
   const me = state.players[self];
   if (!me) throw new Error('알 수 없는 플레이어');

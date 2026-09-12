@@ -1,6 +1,6 @@
 import { legalChoices } from '@/engine/query';
 import { nextInt, pick, seedRng, shuffle, type RngState } from '@/engine/rng';
-import type { AnyChoice, PendingDecision } from '@/engine/types/decision';
+import type { Choice, Prompt } from '@/engine/state/prompt';
 import type { PlayerView } from '@/engine/view';
 import type { Agent } from './agent';
 
@@ -10,13 +10,13 @@ import type { Agent } from './agent';
  */
 export function randomChoice(
   view: PlayerView,
-  d: PendingDecision,
+  d: Prompt,
   rng: RngState,
-): [AnyChoice, RngState] {
+): [Choice, RngState] {
   const enumerated = legalChoices(d);
   if (enumerated && enumerated.length > 0) {
     const [choice, s] = pick(rng, enumerated);
-    return [choice as AnyChoice, s];
+    return [choice as Choice, s];
   }
 
   switch (d.type) {
@@ -67,7 +67,7 @@ export class RandomAgent implements Agent {
     this.#rng = seedRng(seed);
   }
 
-  decide<D extends PendingDecision>(view: PlayerView, d: D) {
+  decide<D extends Prompt>(view: PlayerView, d: D) {
     const [choice, rng] = randomChoice(view, d, this.#rng);
     this.#rng = rng;
     return Promise.resolve(choice as never);

@@ -1,9 +1,9 @@
 import type { BuildingDef, BuildingKind, UniqueBuildingId } from '@/data/types';
 import type { CharacterId } from '@/data/types';
-import type { MainAction, PendingDecision } from '../types/decision';
-import type { GameEvent } from '../types/event';
-import type { CardId, PlayerId } from '../types/ids';
-import type { CityEntry, GameState, TurnState } from '../types/state';
+import type { MainAction, Prompt } from '../state/prompt';
+import type { GameEvent } from '../state/event';
+import type { CardId, PlayerId } from '../state/ids';
+import type { CityEntry, GameState, TurnState } from '../state/game-state';
 
 /** 훅이 상태를 만지는 창구. state 는 immer draft 다. */
 export interface EffectCtx {
@@ -13,7 +13,7 @@ export interface EffectCtx {
   readonly turn: TurnState | null;
   push(e: GameEvent): void;
   /** 훅 안에서 추가 입력이 필요하면 pending 을 세운다. */
-  ask(d: PendingDecision): void;
+  ask(d: Prompt): void;
 }
 
 export interface ScoreCtx {

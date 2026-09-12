@@ -2,7 +2,7 @@ import type { Agent } from '@/bot/agent';
 import { HeuristicAgent, POLICIES } from '@/bot/heuristic';
 import { RandomAgent } from '@/bot/random';
 import { createMatch, matchConfig } from '@/engine/setup';
-import { playerId } from '@/engine/types/ids';
+import { playerId } from '@/engine/state/ids';
 import { runMatch } from '@/runtime/runner';
 
 function makeAgent(kind: string, seed: number): Agent {

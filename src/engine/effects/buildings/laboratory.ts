@@ -17,7 +17,7 @@ export const laboratory: GameHooks = {
     ctx.ask({
       type: 'discardCard',
       player: ctx.self,
-      prompt: `실험실: 카드 1장을 버리고 금화 ${LABORATORY_GOLD}닢을 받습니다`,
+      text: `실험실: 카드 1장을 버리고 금화 ${LABORATORY_GOLD}닢을 받습니다`,
       source: 'laboratory',
       options: [...hand],
     });

@@ -4,7 +4,7 @@ import { createMatchUnchecked, matchConfig } from '@/engine/setup';
 import { applyChoice, step } from '@/engine/machine';
 import { NEVER_FACE_UP_RANK, discardCounts } from '@/engine/rules/selection-table';
 import { replay } from '@/runtime/replay';
-import type { AnyChoice } from '@/engine/types/decision';
+import type { Choice } from '@/engine/state/prompt';
 import { fingerprint, playRandomGame } from './helpers/run';
 
 /** 선택 단계가 시작되어 첫 pending 이 뜰 때까지 진행한다. */
@@ -28,7 +28,7 @@ describe('결정론', () => {
   });
 
   it('시드 + 선택 로그로 판을 그대로 되살린다', async () => {
-    const choices: AnyChoice[] = [];
+    const choices: Choice[] = [];
     const original = await playRandomGame({ seed: 42, playerCount: 6, choiceLog: choices });
     const restored = replay({ config: original.config, choices });
     expect(fingerprint(restored)).toBe(fingerprint(original));

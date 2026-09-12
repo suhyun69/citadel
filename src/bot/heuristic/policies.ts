@@ -1,5 +1,5 @@
-import { defOf } from '@/engine/types/ids';
-import type { AnyChoice, PendingDecision } from '@/engine/types/decision';
+import { defOf } from '@/engine/state/ids';
+import type { Choice, Prompt } from '@/engine/state/prompt';
 import type { PlayerView } from '@/engine/view';
 import {
   biggestOpponentHand,
@@ -21,8 +21,8 @@ import {
  */
 export interface Policy {
   readonly id: string;
-  score?(view: PlayerView, d: PendingDecision, candidate: AnyChoice): number | undefined;
-  construct?(view: PlayerView, d: PendingDecision): AnyChoice | undefined;
+  score?(view: PlayerView, d: Prompt, candidate: Choice): number | undefined;
+  construct?(view: PlayerView, d: Prompt): Choice | undefined;
 }
 
 /** 능력 키별 기본 우선순위. 값이 클수록 먼저 쓴다. */

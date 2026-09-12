@@ -9,9 +9,9 @@
 import { RandomAgent } from '@/bot/random';
 import { missingCards } from '@/engine/effects/registry';
 import { createMatchUnchecked, matchConfig } from '@/engine/setup';
-import type { GameEvent } from '@/engine/types/event';
+import type { GameEvent } from '@/engine/state/event';
 import { formatEvent } from '@/ui/format';
-import type { GameState } from '@/engine/types/state';
+import type { GameState } from '@/engine/state/game-state';
 import { runMatch, seatAgents } from '@/runtime/runner';
 import { buildingDef, characterDef, presetDef, type PresetId } from '@/data/types';
 

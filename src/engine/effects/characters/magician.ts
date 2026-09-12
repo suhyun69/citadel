@@ -1,4 +1,4 @@
-import { playerId } from '../../types/ids';
+import { playerId } from '../../state/ids';
 import type { GameHooks } from '../hooks';
 import { abilityOption, markUsed, matches } from './_shared';
 
@@ -19,7 +19,7 @@ export const magician: GameHooks = {
     ctx.ask({
       type: 'magicianMode',
       player: ctx.self,
-      prompt: '손패를 교환하거나, 버리고 새로 뽑습니다',
+      text: '손패를 교환하거나, 버리고 새로 뽑습니다',
       canSwapWith,
       handSize: ctx.state.players[ctx.self]?.hand.length ?? 0,
     });

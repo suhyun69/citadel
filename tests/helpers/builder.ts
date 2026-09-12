@@ -1,8 +1,8 @@
 import { characterDef, type CharacterId } from '@/data/types';
 import { buildLimitFor } from '@/engine/phases/turn';
 import { buildDeck, createMatchUnchecked, matchConfig } from '@/engine/setup';
-import { playerId, type CardId, type PlayerId } from '@/engine/types/ids';
-import type { GameState, TurnStage } from '@/engine/types/state';
+import { playerId, type CardId, type PlayerId } from '@/engine/state/ids';
+import type { GameState, TurnStage } from '@/engine/state/game-state';
 
 export interface PlayerSpec {
   gold?: number;

@@ -17,9 +17,9 @@ import type { Agent } from '@/bot/agent';
 import { HeuristicAgent } from '@/bot/heuristic';
 import { RandomAgent } from '@/bot/random';
 import { createMatch, matchConfig } from '@/engine/setup';
-import { playerId } from '@/engine/types/ids';
-import type { AnyChoice } from '@/engine/types/decision';
-import type { GameState } from '@/engine/types/state';
+import { playerId } from '@/engine/state/ids';
+import type { Choice } from '@/engine/state/prompt';
+import type { GameState } from '@/engine/state/game-state';
 import { runMatch } from '@/runtime/runner';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -61,7 +61,7 @@ export async function playGolden(
   const agents = new Map(
     Array.from({ length: players }, (_, i) => [playerId(i), makeAgent(bot, seed * 100 + i)]),
   );
-  const choiceLog: AnyChoice[] = [];
+  const choiceLog: Choice[] = [];
   const final = await runMatch(createMatch(config), agents, { choiceLog });
 
   return {

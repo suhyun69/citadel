@@ -20,10 +20,11 @@ export type MainAction =
   | { readonly t: 'endTurn' };
 
 /**
- * 결정(엔진이 묻는 것)과 선택(에이전트가 답하는 것)을 타입 레벨에서 쌍으로 묶는다.
- * `d` = 결정에 실린 정보, `c` = 그에 대한 답.
+ * 게임 마스터가 던지는 질문(`d`)과 플레이어가 돌려주는 답(`c`)을 타입 레벨에서
+ * 쌍으로 묶는다. 여기에 항목을 추가하면 선택지 열거·승인·적용 세 곳의 switch 가
+ * 전부 컴파일 에러를 내므로, 어느 하나를 빠뜨릴 수 없다.
  */
-export interface DecisionMap {
+export interface PromptMap {
   /** 선택 단계: 돌아온 캐릭터 더미에서 1장 고르기 */
   selectCharacter: {
     d: { options: readonly CharacterId[]; poolSize: number };
@@ -76,26 +77,29 @@ export interface DecisionMap {
   };
 }
 
-export type DecisionType = keyof DecisionMap;
+export type PromptType = keyof PromptMap;
 
 /**
- * 엔진이 멈춰 있는 지점. `player` 가 현재 차례 플레이어와 달라도 된다 —
- * 지금은 쓰이지 않지만, 남의 차례에 끼어드는 후순위 캐릭터(치안판사 등)가
- * 구조 변경 없이 들어올 자리다.
+ * 게임 마스터가 특정 플레이어에게 던진 질문.
+ *
+ * `player` 가 현재 차례 플레이어와 달라도 된다 — 지금은 쓰이지 않지만,
+ * 남의 차례에 끼어드는 후순위 캐릭터(치안판사 등)가 구조 변경 없이 들어올 자리다.
  */
-export type PendingDecision = {
-  [K in DecisionType]: DecisionMap[K]['d'] & {
+export type Prompt = {
+  [K in PromptType]: PromptMap[K]['d'] & {
     readonly type: K;
     readonly player: PlayerId;
-    readonly prompt: string;
+    readonly text: string;
   };
-}[DecisionType];
+}[PromptType];
 
-export type ChoiceOf<D extends PendingDecision> = DecisionMap[D['type']]['c'];
+/** 이 질문에 대한 답의 타입. */
+export type ChoiceOf<P extends Prompt> = PromptMap[P['type']]['c'];
 
-export type AnyChoice = {
-  [K in DecisionType]: DecisionMap[K]['c'] & { readonly type: K };
-}[DecisionType];
+/** 플레이어가 돌려주는 답. `type` 이 어느 질문에 대한 것인지 말해준다. */
+export type Choice = {
+  [K in PromptType]: PromptMap[K]['c'] & { readonly type: K };
+}[PromptType];
 
-export type DecisionOfType<K extends DecisionType> = Extract<PendingDecision, { type: K }>;
-export type ChoiceOfType<K extends DecisionType> = Extract<AnyChoice, { type: K }>;
+export type PromptOfType<K extends PromptType> = Extract<Prompt, { type: K }>;
+export type ChoiceOfType<K extends PromptType> = Extract<Choice, { type: K }>;

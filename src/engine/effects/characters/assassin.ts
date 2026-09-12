@@ -23,7 +23,7 @@ export const assassin: GameHooks = {
     ctx.ask({
       type: 'namedCharacter',
       player: ctx.self,
-      prompt: '암살할 캐릭터를 지목하세요',
+      text: '암살할 캐릭터를 지목하세요',
       purpose: 'assassinate',
       options,
     });

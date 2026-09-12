@@ -1,7 +1,7 @@
 import { applyChoice, isOver, step } from '@/engine/machine';
 import { createMatchUnchecked } from '@/engine/setup';
-import type { AnyChoice } from '@/engine/types/decision';
-import type { GameState, MatchConfig } from '@/engine/types/state';
+import type { Choice } from '@/engine/state/prompt';
+import type { GameState, MatchConfig } from '@/engine/state/game-state';
 
 /**
  * 시드 + 선택 로그면 판이 그대로 되살아난다. 수백 바이트짜리 저장 포맷이고,
@@ -9,7 +9,7 @@ import type { GameState, MatchConfig } from '@/engine/types/state';
  */
 export interface Replay {
   config: MatchConfig;
-  choices: AnyChoice[];
+  choices: Choice[];
 }
 
 export function replay(r: Replay): GameState {

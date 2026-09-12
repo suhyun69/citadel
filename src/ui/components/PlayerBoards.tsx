@@ -1,7 +1,7 @@
 'use client';
 
 import { characterDef } from '@/data/types';
-import type { GameState } from '@/engine/types/state';
+import type { GameState } from '@/engine/state/game-state';
 import { cardTitle, costOf, kindOf } from '../format';
 
 /**

@@ -1,6 +1,6 @@
 import type { CharacterId, PresetId, UniqueBuildingId } from '@/data/types';
 import type { RngState } from '../rng';
-import type { PendingDecision } from './decision';
+import type { Prompt } from './prompt';
 import type { GameEvent } from './event';
 import type { CardId, PlayerId } from './ids';
 
@@ -120,7 +120,7 @@ export interface GameState {
   selection: SelectionState | null;
   action: ActionPhaseState | null;
   /** null 이면 step() 으로 진행할 수 있다. 채워져 있으면 applyChoice() 를 기다린다. */
-  pending: PendingDecision | null;
+  pending: Prompt | null;
   log: GameEvent[];
   /** 가장 먼저 도시를 완성한 플레이어 (4점) */
   firstCompleted: PlayerId | null;

@@ -27,7 +27,7 @@ export const thief: GameHooks = {
     ctx.ask({
       type: 'namedCharacter',
       player: ctx.self,
-      prompt: '금화를 훔쳐올 캐릭터를 지목하세요',
+      text: '금화를 훔쳐올 캐릭터를 지목하세요',
       purpose: 'rob',
       options,
     });

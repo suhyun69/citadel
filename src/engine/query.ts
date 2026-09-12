@@ -1,5 +1,5 @@
-import type { AnyChoice, MainAction, PendingDecision } from './types/decision';
-import type { GameState } from './types/state';
+import type { Choice, MainAction, Prompt } from './state/prompt';
+import type { GameState } from './state/game-state';
 
 function sameAction(a: MainAction, b: MainAction): boolean {
   if (a.t !== b.t) return false;
@@ -32,7 +32,7 @@ function combinations<T>(items: readonly T[], k: number): T[][] {
  * 합법 수 열거. 조합 폭발이 나는 결정(마술사의 버릴 카드 부분집합)은 null 을
  * 돌려주고, 그때는 봇이 결정에 실린 제약을 직접 해석한다.
  */
-export function legalChoices(d: PendingDecision): AnyChoice[] | null {
+export function legalChoices(d: Prompt): Choice[] | null {
   switch (d.type) {
     case 'selectCharacter':
       return d.options.map((characterId) => ({ type: 'selectCharacter', characterId }));
@@ -48,7 +48,7 @@ export function legalChoices(d: PendingDecision): AnyChoice[] | null {
     case 'namedCharacter':
       return d.options.map((characterId) => ({ type: 'namedCharacter', characterId }));
     case 'warlordTarget': {
-      const out: AnyChoice[] = d.options.map((o) => ({
+      const out: Choice[] = d.options.map((o) => ({
         type: 'warlordTarget' as const,
         target: { player: o.player, card: o.card },
       }));
@@ -63,7 +63,7 @@ export function legalChoices(d: PendingDecision): AnyChoice[] | null {
   }
 }
 
-export function isLegal(state: GameState, d: PendingDecision, c: AnyChoice): boolean {
+export function isLegal(state: GameState, d: Prompt, c: Choice): boolean {
   if (d.type !== c.type) return false;
 
   switch (d.type) {

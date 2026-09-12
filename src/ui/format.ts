@@ -31,6 +31,15 @@ export function lineOf(e: FormattedEvent): string {
 }
 
 /**
+ * 교환의 한쪽. 당사자 시점이면 카드 이름을, 제3자 시점이면 장수만 보여준다.
+ * 목록이 비어 있는데 장수가 남아 있다면 redactEvent 가 가린 것이다.
+ */
+function swapSide(label: string, cards: readonly CardId[], count: number): string {
+  if (count === 0) return `${label} 없음`;
+  return cards.length > 0 ? `${label} ${cards.map(cardTitle).join(', ')}` : `${label} ${count}장`;
+}
+
+/**
  * 이벤트 하나를 사람이 읽는 한 줄로. 관전 로그와 CLI 가 함께 쓴다.
  *
  * 문구는 `P0 [행동] 내용` 으로 통일한다 — 무슨 일이 있었는지가 대괄호 안에
@@ -76,6 +85,14 @@ export function formatEvent(e: GameEvent): FormattedEvent | null {
 
     case 'skipped':
       return { actor: e.player, tag: '암살당함', detail: '차례를 쉼', depth: 2, tone: 'bad' };
+
+    case 'handSwapped':
+      return {
+        actor: e.by,
+        tag: '마술사 교환',
+        detail: `P${e.partner} · ${swapSide('준', e.given, e.givenCount)} · ${swapSide('받은', e.received, e.receivedCount)}`,
+        depth: 2,
+      };
 
     case 'gained':
       return {

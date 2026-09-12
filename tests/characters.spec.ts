@@ -122,6 +122,71 @@ describe('마술사', () => {
     expect(checkInvariants(s.snapshot())).toEqual([]);
   });
 
+  it('누구와 무엇을 주고받았는지 기록에 남는다', () => {
+    const gm = aGame()
+      .players(4)
+      .player(0, { hand: [card('temple'), card('chapel')] })
+      .player(1, { hand: [card('castle'), card('palace'), card('manor')] })
+      .assign(0, 'magician')
+      .atTurn(0)
+      .build();
+
+    useAbility(gm, 'magician.magic');
+    answer(gm, { type: 'magicianMode', mode: 'swap', target: playerId(1) });
+
+    expect(gm.log()).toContainEqual({
+      t: 'handSwapped',
+      by: playerId(0),
+      partner: playerId(1),
+      given: [card('temple'), card('chapel')],
+      received: [card('castle'), card('palace'), card('manor')],
+      givenCount: 2,
+      receivedCount: 3,
+    });
+  });
+
+  it('교환한 카드는 당사자 둘만 보고, 나머지는 장수만 본다', () => {
+    const gm = aGame()
+      .players(4)
+      .player(0, { hand: [card('temple'), card('chapel')] })
+      .player(1, { hand: [card('castle')] })
+      .assign(0, 'magician')
+      .atTurn(0)
+      .build();
+
+    useAbility(gm, 'magician.magic');
+    answer(gm, { type: 'magicianMode', mode: 'swap', target: playerId(1) });
+
+    /** 그 좌석의 시점에서 본 교환 기록. */
+    function swapSeenBy(seat: number) {
+      const seen = gm
+        .player(playerId(seat))
+        .view()
+        .log.find((e) => e.t === 'handSwapped');
+      if (seen?.t !== 'handSwapped') {
+        throw new Error(`P${seat} 시점에 교환 기록이 없습니다 — 교환 사실은 공개여야 합니다`);
+      }
+      return seen;
+    }
+
+    // 당사자 — 카드가 그대로 보인다
+    for (const seat of [0, 1]) {
+      const seen = swapSeenBy(seat);
+      expect(seen.given, `P${seat}`).toEqual([card('temple'), card('chapel')]);
+      expect(seen.received, `P${seat}`).toEqual([card('castle')]);
+    }
+
+    // 제3자 — 교환이 있었다는 것은 알지만 무엇인지는 모른다
+    for (const seat of [2, 3]) {
+      const seen = swapSeenBy(seat);
+      expect(seen.given, `P${seat} 에게 카드가 새어나갔습니다`).toEqual([]);
+      expect(seen.received, `P${seat} 에게 카드가 새어나갔습니다`).toEqual([]);
+      // 장수는 남아 있어 "몇 장짜리 교환이었나" 는 볼 수 있다
+      expect(seen.givenCount).toBe(2);
+      expect(seen.receivedCount).toBe(1);
+    }
+  });
+
   it('버린 만큼 새로 뽑고, 버린 카드는 더미 맨 아래로 간다', () => {
     const s = aGame()
       .players(4)

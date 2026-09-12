@@ -19,6 +19,24 @@ export type GameEvent =
    * 누구에게도 가려지지 않는다.
    */
   | { t: 'declared'; by: PlayerId; purpose: 'assassinate' | 'rob'; target: CharacterId }
+  /**
+   * 마술사의 손패 교환.
+   *
+   * **교환이 일어났다는 사실은 공개**지만 어떤 카드였는지는 두 당사자만 안다.
+   * 그래서 카드 목록과 장수를 따로 들고 다니며, redactEvent 가 제3자 시점에서
+   * 목록만 비운다.
+   */
+  | {
+      t: 'handSwapped';
+      by: PlayerId;
+      partner: PlayerId;
+      /** 마술사가 넘긴 카드. 당사자가 아니면 빈 배열. */
+      given: readonly CardId[];
+      /** 마술사가 받은 카드. 당사자가 아니면 빈 배열. */
+      received: readonly CardId[];
+      givenCount: number;
+      receivedCount: number;
+    }
   | { t: 'gained'; player: PlayerId; gold?: number; cards?: number; reason: string }
   | { t: 'paid'; player: PlayerId; gold: number; reason: string }
   | { t: 'built'; player: PlayerId; card: CardId; paid: number }

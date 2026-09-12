@@ -53,10 +53,20 @@ export function resolveMagicianMode(
   if (choice.mode === 'swap') {
     const other = state.players[choice.target];
     if (!other) throw new Error('알 수 없는 교환 상대');
-    const mine = me.hand;
-    me.hand = other.hand;
-    other.hand = mine;
-    state.log.push({ t: 'gained', player: self, cards: me.hand.length, reason: '마술사 교환' });
+    const given = [...me.hand];
+    const received = [...other.hand];
+    me.hand = received.slice();
+    other.hand = given.slice();
+
+    state.log.push({
+      t: 'handSwapped',
+      by: self,
+      partner: choice.target,
+      given,
+      received,
+      givenCount: given.length,
+      receivedCount: received.length,
+    });
     return;
   }
 

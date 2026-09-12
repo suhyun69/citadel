@@ -75,6 +75,12 @@ export function viewFor(state: GameState, viewer: PlayerId): PlayerView {
 /** 남이 무엇을 골랐는지는 공개되기 전까지 숨긴다. */
 export function redactEvent(e: GameEvent, viewer: PlayerId): GameEvent | null {
   if (e.t === 'characterPicked' && e.player !== viewer) return null;
+
+  // 교환이 있었다는 것은 모두가 본다. 무엇을 주고받았는지는 당사자 둘만 안다.
+  if (e.t === 'handSwapped' && viewer !== e.by && viewer !== e.partner) {
+    return { ...e, given: [], received: [] };
+  }
+
   return e;
 }
 

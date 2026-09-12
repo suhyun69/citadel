@@ -76,7 +76,7 @@ export function applyGatherMode(state: GameState, mode: 'gold' | 'cards'): void 
   const plan = gatherPlan(state, turn.playerId);
   if (mode === 'gold') {
     p.gold += plan.gold;
-    state.log.push({ t: 'gained', player: turn.playerId, gold: plan.gold, reason: '자원 얻기' });
+    state.log.push({ t: 'gained', player: turn.playerId, gold: plan.gold, reason: '자원얻기' });
     turn.stage = 'main';
   } else {
     turn.drawn = draw(state, plan.draw);
@@ -105,7 +105,7 @@ export function applyKeepDrawn(state: GameState, keep: readonly CardId[]): void 
   p.hand.push(...keep);
   returnToBottom(state, rest);
 
-  state.log.push({ t: 'gained', player: turn.playerId, cards: keep.length, reason: '자원 얻기' });
+  state.log.push({ t: 'gained', player: turn.playerId, cards: keep.length, reason: '자원얻기' });
   turn.drawn = null;
   turn.stage = 'main';
 }

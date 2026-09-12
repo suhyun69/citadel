@@ -1,4 +1,4 @@
-import { characterDef, type BuildingKind, type CharacterId } from '@/data/types';
+import { KIND_LABEL_KO, characterDef, type BuildingKind, type CharacterId } from '@/data/types';
 import { countIncome } from '../../rules/income';
 import type { MainAction } from '../../state/prompt';
 import { playerId, type PlayerId } from '../../state/ids';
@@ -34,7 +34,7 @@ export function grantKindIncome(ctx: EffectCtx, kind: BuildingKind, ability: str
   const p = ctx.state.players[ctx.self];
   if (!p) return;
   p.gold += n;
-  ctx.push({ t: 'gained', player: ctx.self, gold: n, reason: `${kind} 건물 ${n}채` });
+  ctx.push({ t: 'gained', player: ctx.self, gold: n, reason: `${KIND_LABEL_KO[kind]} 수입` });
 }
 
 /** 이번 게임에 쓰이는 캐릭터 전부. */

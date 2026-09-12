@@ -6,6 +6,18 @@ export type { BuildingDefId, UniqueBuildingId, CharacterId, PresetId };
 /** 건물 종류 5가지. 캐릭터 수입과 게임 종료 점수(5종 보너스)에 쓰인다. */
 export type BuildingKind = 'religious' | 'military' | 'noble' | 'trade' | 'unique';
 
+/**
+ * 종류의 한글 이름. 로그 문구와 화면이 함께 쓴다.
+ * `KIND_FROM_KO` 의 역방향이며, 엔진이 영문 enum 을 그대로 내보내지 않게 막는다.
+ */
+export const KIND_LABEL_KO: Record<BuildingKind, string> = {
+  religious: '종교',
+  military: '군사',
+  noble: '귀족',
+  trade: '상업',
+  unique: '특수',
+};
+
 export const BUILDING_KINDS: readonly BuildingKind[] = [
   'religious',
   'military',

@@ -10,7 +10,7 @@ import { RandomAgent } from '@/bot/random';
 import { missingCards } from '@/engine/effects/registry';
 import { createGame } from '@/engine';
 import type { GameEvent } from '@/engine/state/event';
-import { formatEvent } from '@/ui/format';
+import { formatEvent, lineOf } from '@/ui/format';
 import type { GameState } from '@/engine/state/game-state';
 import { runMatch, seatAgents } from '@/runtime/runner';
 import { buildingDef, characterDef, presetDef, type PresetId } from '@/data/types';
@@ -41,7 +41,8 @@ function describe(e: GameEvent): string {
   const f = formatEvent(e);
   if (!f) return '';
   const indent = '  '.repeat(f.depth);
-  return f.depth === 0 ? `\n${indent}${f.text}` : `${indent}${f.text}`;
+  const line = lineOf(f);
+  return f.depth === 0 ? `\n${indent}${line}` : `${indent}${line}`;
 }
 
 function report(state: GameState): void {

@@ -3,7 +3,7 @@ import { HeuristicAgent } from '@/bot/heuristic';
 import { createGame } from '@/engine';
 import { playerId } from '@/engine/state/ids';
 import { runMatch } from '@/runtime/runner';
-import { formatEvent } from '@/ui/format';
+import { formatEvent, lineOf } from '@/ui/format';
 import { Pacer } from '@/ui/pacer';
 import { fingerprint } from './helpers/run';
 
@@ -41,7 +41,7 @@ describe('관전 화면이 의존하는 성질', () => {
     for (const e of shown) {
       const f = formatEvent(e);
       expect(f, `${e.t} 를 표시할 수 없습니다`).not.toBeNull();
-      expect(f?.text.length).toBeGreaterThan(0);
+      expect(lineOf(f!).length).toBeGreaterThan(0);
     }
     expect(shown.length).toBeGreaterThan(50);
   });

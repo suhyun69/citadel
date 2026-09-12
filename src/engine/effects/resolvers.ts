@@ -56,7 +56,7 @@ export function resolveMagicianMode(
     const mine = me.hand;
     me.hand = other.hand;
     other.hand = mine;
-    state.log.push({ t: 'gained', player: self, cards: me.hand.length, reason: '마술사 손패 교환' });
+    state.log.push({ t: 'gained', player: self, cards: me.hand.length, reason: '마술사 교환' });
     return;
   }
 
@@ -73,7 +73,7 @@ export function resolveMagicianMode(
   me.hand.push(...got);
   returnToBottom(state, discard);
 
-  state.log.push({ t: 'gained', player: self, cards: got.length, reason: '마술사 카드 교체' });
+  state.log.push({ t: 'gained', player: self, cards: got.length, reason: '마술사 교체' });
 }
 
 export function resolveWarlordTarget(

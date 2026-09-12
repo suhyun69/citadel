@@ -7,7 +7,14 @@ import { formatEvent } from '../format';
 const Row = memo(function Row({ event }: { event: GameEvent }) {
   const f = formatEvent(event);
   if (!f) return null;
-  return <div className={`row d${f.depth} ${f.tone ?? ''}`}>{f.text}</div>;
+
+  return (
+    <div className={`row d${f.depth} ${f.tone ?? ''}`}>
+      {f.actor === undefined ? null : <span className="who">P{f.actor}</span>}
+      {f.tag ? <span className="tag">[{f.tag}]</span> : null}
+      {f.detail ? <span className="what">{f.detail}</span> : null}
+    </div>
+  );
 });
 
 export function EventLog({ log }: { log: readonly GameEvent[] }) {

@@ -232,6 +232,14 @@ button:disabled { opacity: 0.45; cursor: default; }
 .log .d0 { color: var(--ink); font-weight: 700; margin-top: 8px; }
 .log .d1 { padding-left: 10px; }
 .log .d2 { padding-left: 22px; }
+.log .who { color: var(--ink-3); margin-right: 5px; }
+.log .tag {
+  color: var(--ink-3);
+  margin-right: 5px;
+  font-size: 11px;
+}
+.log .good .tag,
+.log .bad .tag { color: inherit; opacity: 0.7; }
 .log .good { color: var(--good); }
 .log .bad { color: var(--bad); }
 .log .note { color: var(--ink-3); }

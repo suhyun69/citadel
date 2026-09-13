@@ -258,3 +258,111 @@ table.scores td {
 table.scores td:first-child { text-align: left; }
 table.scores tr.win td { color: var(--gold); font-weight: 700; }
 table.scores td.total { font-weight: 700; }
+
+/* ── 점수 계산 내역 ─────────────────────────── */
+.total-btn {
+  background: none;
+  border: none;
+  border-bottom: 1px dashed var(--ink-3);
+  border-radius: 0;
+  padding: 0 1px 1px;
+  font: inherit;
+  font-weight: 700;
+  color: inherit;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+.total-btn:hover { border-bottom-color: var(--accent); color: var(--accent); }
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 50;
+}
+.modal {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  width: min(520px, 100%);
+  max-height: 86vh;
+  overflow-y: auto;
+  padding: 16px 18px 18px;
+  box-shadow: 0 12px 40px rgb(0 0 0 / 0.25);
+}
+
+.bd-top {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+.bd-who { font-weight: 700; font-size: 15px; }
+.bd-total {
+  margin-left: auto;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
+.bd-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--ink-3);
+  cursor: pointer;
+  padding: 0 2px;
+}
+.bd-close:hover { color: var(--ink); }
+
+.bd-section { padding: 11px 0; border-bottom: 1px solid var(--line); }
+.bd-section:last-child { border-bottom: none; padding-bottom: 0; }
+.bd-head { display: flex; align-items: baseline; gap: 10px; }
+.bd-title { font-weight: 600; }
+.bd-points {
+  margin-left: auto;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--gold);
+}
+.bd-points.zero, .zero { color: var(--ink-3); font-weight: 400; }
+.bd-body { margin-top: 7px; display: flex; flex-direction: column; gap: 6px; }
+
+.bd-cards, .bd-kinds { display: flex; flex-wrap: wrap; gap: 4px; }
+.tile.missing {
+  background: transparent;
+  border: 1px dashed var(--line);
+  color: var(--ink-3);
+  text-decoration: line-through;
+}
+
+.muted { color: var(--ink-2); font-size: 12px; }
+
+.bd-items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+.bd-item-head {
+  display: flex;
+  gap: 10px;
+  font-size: 13px;
+}
+.bd-item-head > span:last-child {
+  margin-left: auto;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--gold);
+}
+
+.bd-note {
+  margin-top: 4px;
+  padding: 7px 9px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  font-size: 12px;
+  color: var(--ink-2);
+}

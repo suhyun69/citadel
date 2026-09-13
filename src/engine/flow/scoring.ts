@@ -1,8 +1,14 @@
-import { BUILDING_KINDS, characterDef, type BuildingKind } from '@/data/types';
+import {
+  BUILDING_KINDS,
+  characterDef,
+  type BuildingKind,
+  type CharacterId,
+  type UniqueBuildingId,
+} from '@/data/types';
 import { makeScoreCtx } from '../effects/ctx';
-import { collectHooks } from '../effects/registry';
+import { collectHookSources, collectHooks } from '../effects/registry';
 import { cityCost } from '../rules/build';
-import { defOf, playerId, type PlayerId } from '../state/ids';
+import { defOf, playerId, type CardId, type PlayerId } from '../state/ids';
 import type { CityEntry, GameState, MatchResult, PlayerScore } from '../state/game-state';
 
 export const ALL_KINDS_BONUS = 3;
@@ -79,15 +85,104 @@ function scoreWith(state: GameState, player: PlayerId, wildcardAs: WildcardAs): 
   };
 }
 
-export function scoreFor(state: GameState, player: PlayerId): PlayerScore {
-  if (!hasWildcard(state, player)) return scoreWith(state, player, null);
+/**
+ * 유령 지구를 어떤 종류로 쓸지 고른다.
+ *
+ * 동점이면 먼저 본 후보를 유지한다 — 특수 그대로(null)가 기본이고, 그 다음
+ * BUILDING_KINDS 순서다. 설명 화면이 총점과 어긋나지 않으려면 점수 계산과
+ * 이 선택이 반드시 같은 함수를 거쳐야 한다.
+ */
+export function bestWildcard(state: GameState, player: PlayerId): WildcardAs {
+  if (!hasWildcard(state, player)) return null;
 
-  let best = scoreWith(state, player, null);
+  let best: WildcardAs = null;
+  let bestTotal = scoreWith(state, player, null).total;
+
   for (const kind of BUILDING_KINDS) {
-    const candidate = scoreWith(state, player, kind);
-    if (candidate.total > best.total) best = candidate;
+    const total = scoreWith(state, player, kind).total;
+    if (total > bestTotal) {
+      bestTotal = total;
+      best = kind;
+    }
   }
   return best;
+}
+
+export function scoreFor(state: GameState, player: PlayerId): PlayerScore {
+  return scoreWith(state, player, bestWildcard(state, player));
+}
+
+/** 특수 건물(또는 캐릭터) 한 장이 준 종료 점수. */
+export type ScoreItem =
+  | { kind: 'building'; building: UniqueBuildingId; card: CardId; points: number }
+  | { kind: 'character'; character: CharacterId; points: number };
+
+/**
+ * 점수가 어떻게 나왔는지 항목별로 풀어 쓴다.
+ *
+ * `PlayerScore` 에 담지 않고 최종 상태에서 필요할 때 계산한다 — 점수는
+ * GameState 안에 저장되므로, 설명을 거기 끼워 넣으면 상태 지문이 바뀌어
+ * 규칙 변경처럼 보인다. 설명은 화면의 관심사이지 게임의 상태가 아니다.
+ */
+export interface ScoreExplanation {
+  player: PlayerId;
+  /** 도시의 건물과 각각의 건설비용. 합이 buildingCost 다. */
+  buildings: { card: CardId; cost: number; kind: BuildingKind }[];
+  buildingCost: number;
+  /** 점수 계산상 갖춘 종류 / 빠진 종류. 유령 지구의 선택이 반영돼 있다. */
+  kindsPresent: BuildingKind[];
+  kindsMissing: BuildingKind[];
+  allKindsBonus: number;
+  completion: { completed: boolean; first: boolean; points: number };
+  /** 유령 지구를 어떤 종류로 썼는가. null 이면 특수 그대로. */
+  wildcardAs: WildcardAs;
+  items: ScoreItem[];
+  uniqueBonus: number;
+  total: number;
+}
+
+export function explainScore(state: GameState, player: PlayerId): ScoreExplanation {
+  const wildcardAs = bestWildcard(state, player);
+  const score = scoreWith(state, player, wildcardAs);
+  const p = state.players[player];
+  const ctx = makeScoreCtx(state, player, wildcardAs);
+
+  const buildings = (p?.city ?? []).map((entry) => ({
+    card: entry.card,
+    cost: defOf(entry.card).cost ?? 0,
+    kind: scoringKindOf(state, player, entry, wildcardAs),
+  }));
+
+  const present = new Set(buildings.map((b) => b.kind));
+
+  const items: ScoreItem[] = [];
+  for (const source of collectHookSources(state, player)) {
+    const points = source.hooks.endGameScore?.(ctx);
+    if (points === undefined) continue;
+    items.push(
+      source.from.kind === 'building'
+        ? { kind: 'building', building: source.from.id, card: source.from.card, points }
+        : { kind: 'character', character: source.from.id, points },
+    );
+  }
+
+  return {
+    player,
+    buildings,
+    buildingCost: score.buildingCost,
+    kindsPresent: BUILDING_KINDS.filter((k) => present.has(k)),
+    kindsMissing: BUILDING_KINDS.filter((k) => !present.has(k)),
+    allKindsBonus: score.allKindsBonus,
+    completion: {
+      completed: p?.cityCompletedAtRound !== null && p !== undefined,
+      first: state.firstCompleted === player,
+      points: score.completionBonus,
+    },
+    wildcardAs,
+    items,
+    uniqueBonus: score.uniqueBonus,
+    total: score.total,
+  };
 }
 
 /** 동점이면 마지막 라운드의 캐릭터 순번이 더 늦은 쪽이 이긴다 (howto.md:120). */

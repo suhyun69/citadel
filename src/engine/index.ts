@@ -8,7 +8,8 @@ export { approveChoice, isLegal } from './options/approve';
 export { viewFor, redactEvent } from './view';
 export { assertInvariants, checkInvariants } from './rules/invariants';
 export { isPlayable, missingCards } from './effects/registry';
-export { computeResult, scoreFor } from './flow/scoring';
+export { computeResult, scoreFor, explainScore, bestWildcard } from './flow/scoring';
+export type { ScoreExplanation, ScoreItem } from './flow/scoring';
 
 export type {
   GameState,

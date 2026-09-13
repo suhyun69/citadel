@@ -40,7 +40,7 @@ describe('선택 단계', () => {
     for (const playerCount of [4, 5, 6, 7]) {
       const s = untilFirstPick(0, playerCount);
       const sel = s.snapshot().selection;
-      const want = discardCounts(playerCount);
+      const want = discardCounts(8, playerCount);
       expect(sel?.faceUp).toHaveLength(want.faceUp);
       expect(sel?.faceDown).toHaveLength(want.faceDown);
       // 캐릭터 8장 = 앞면 + 뒷면 + 남은 더미

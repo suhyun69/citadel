@@ -366,3 +366,14 @@ table.scores td.total { font-weight: 700; }
   font-size: 12px;
   color: var(--ink-2);
 }
+
+.error {
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--bad);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--bad);
+  font-size: 13px;
+}
+.controls input[type='checkbox'] { accent-color: var(--accent); }

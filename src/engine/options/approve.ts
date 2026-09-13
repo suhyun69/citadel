@@ -56,8 +56,8 @@ export function approveChoice(state: GameState, prompt: Prompt, choice: Choice):
         ? ACCEPTED
         : reject('버릴 수 없는 카드입니다');
 
-    case 'warlordTarget': {
-      if (choice.type !== 'warlordTarget') return reject('답의 종류가 맞지 않습니다');
+    case 'rank8Target': {
+      if (choice.type !== 'rank8Target') return reject('답의 종류가 맞지 않습니다');
       if (choice.target === null) {
         return prompt.canSkip ? ACCEPTED : reject('건너뛸 수 없습니다');
       }
@@ -65,6 +65,51 @@ export function approveChoice(state: GameState, prompt: Prompt, choice: Choice):
       return prompt.options.some((o) => o.player === target.player && o.card === target.card)
         ? ACCEPTED
         : reject('파괴할 수 없는 건물입니다');
+    }
+
+    case 'warrants': {
+      if (choice.type !== 'warrants') return reject('답의 종류가 맞지 않습니다');
+      const all = [choice.sealed, ...choice.decoys];
+      if (all.length !== 3) return reject('영장은 서로 다른 캐릭터 3명에게 붙입니다');
+      if (new Set(all).size !== 3) return reject('같은 캐릭터에 두 번 붙일 수 없습니다');
+      return all.every((id) => prompt.options.includes(id))
+        ? ACCEPTED
+        : reject('영장을 붙일 수 없는 캐릭터입니다');
+    }
+
+    case 'seize':
+      return choice.type === 'seize' ? ACCEPTED : reject('답의 종류가 맞지 않습니다');
+
+    case 'pickPlayer':
+      return choice.type === 'pickPlayer' && prompt.options.includes(choice.player)
+        ? ACCEPTED
+        : reject('고를 수 없는 플레이어입니다');
+
+    case 'takeCard':
+      return choice.type === 'takeCard' && prompt.options.includes(choice.card)
+        ? ACCEPTED
+        : reject('가져올 수 없는 카드입니다');
+
+    case 'buildTaken': {
+      if (choice.type !== 'buildTaken') return reject('답의 종류가 맞지 않습니다');
+      if (!choice.build) return ACCEPTED;
+      const gold = state.players[prompt.player]?.gold ?? 0;
+      return gold >= prompt.cost ? ACCEPTED : reject('건설비용이 부족합니다');
+    }
+
+    case 'freeBuild':
+      return choice.type === 'freeBuild' && prompt.options.includes(choice.card)
+        ? ACCEPTED
+        : reject('공짜로 지을 수 없는 건물입니다');
+
+    case 'sacrificeBuild': {
+      if (choice.type !== 'sacrificeBuild') return reject('답의 종류가 맞지 않습니다');
+      if (choice.sacrifice === null) {
+        return prompt.canPayGold ? ACCEPTED : reject('건설비용을 낼 금화가 부족합니다');
+      }
+      return prompt.options.includes(choice.sacrifice)
+        ? ACCEPTED
+        : reject('부술 수 없는 건물입니다');
     }
 
     case 'magicianMode': {

@@ -68,3 +68,39 @@ describe('휴리스틱 봇 퍼즈', () => {
     }
   }, 120_000);
 });
+
+/**
+ * 새로 연 조합도 같은 그물을 통과해야 한다.
+ *
+ * 치안판사가 남의 차례에 끼어들고, 골조·공동묘지가 건물을 부수며 짓고,
+ * 육군대장이 건물을 통째로 옮긴다 — 카드가 사라지거나 복제되기 딱 좋은
+ * 동작들이라 68장 불변식이 특히 값지다.
+ */
+describe('귀족이여 야망을 가져라', () => {
+  const SEEDS = Number(process.env['FUZZ_SEEDS'] ?? 40);
+
+  for (const playerCount of [4, 7] as const) {
+    it(`${playerCount}인 ${SEEDS}판이 불변식을 지키며 완주한다`, async () => {
+      for (let seed = 0; seed < SEEDS; seed++) {
+        const final = await playRandomGame({ seed, playerCount, presetId: 'nobles' });
+        expect(checkInvariants(final.snapshot()), `seed=${seed}`).toEqual([]);
+        expect(final.phase(), `seed=${seed}`).toBe('finished');
+      }
+    }, 120_000);
+  }
+
+  it(`왕비를 넣은 5인 ${SEEDS}판도 완주한다`, async () => {
+    for (let seed = 0; seed < SEEDS; seed++) {
+      const agents = new Map(
+        Array.from({ length: 5 }, (_, i) => [playerId(i), new HeuristicAgent(`h${i}`, seed * 100 + i)]),
+      );
+      const final = await runMatch(
+        createGame({ seed, playerCount: 5, presetId: 'nobles', useRank9: true }),
+        agents,
+        { verifyInvariants: true },
+      );
+      expect(checkInvariants(final.snapshot()), `seed=${seed}`).toEqual([]);
+      expect(final.phase()).toBe('finished');
+    }
+  }, 120_000);
+});

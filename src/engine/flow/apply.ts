@@ -2,10 +2,17 @@ import { produce } from 'immer';
 import type { UniqueBuildingId } from '@/data/types';
 import {
   resolveBuildPayment,
+  resolveBuildTaken,
+  resolveFreeBuild,
+  resolvePickPlayer,
+  resolveSeize,
+  resolveWarrants,
+  resolveTakeCard,
+  resolveSacrificeBuild,
   resolveDiscardCard,
   resolveMagicianMode,
   resolveNamedCharacter,
-  resolveWarlordTarget,
+  resolveRank8Target,
 } from '../effects/resolvers';
 import type { GameState } from '../state/game-state';
 import type { CardId } from '../state/ids';
@@ -46,8 +53,13 @@ export function applyApprovedChoice(state: GameState, prompt: Prompt, choice: Ch
       case 'magicianMode':
         resolveMagicianMode(s, prompt.player, choice);
         return;
-      case 'warlordTarget':
-        resolveWarlordTarget(s, prompt.player, choice.target);
+      case 'rank8Target':
+        resolveRank8Target(
+          s,
+          prompt.player,
+          (prompt as { purpose: 'destroy' | 'capture' }).purpose,
+          choice.target,
+        );
         return;
       case 'discardCard':
         resolveDiscardCard(
@@ -55,6 +67,38 @@ export function applyApprovedChoice(state: GameState, prompt: Prompt, choice: Ch
           prompt.player,
           (prompt as { source: UniqueBuildingId }).source,
           choice.card,
+        );
+        return;
+      case 'warrants':
+        resolveWarrants(s, choice.sealed, choice.decoys);
+        return;
+      case 'seize':
+        resolveSeize(s, prompt.player, choice.seize);
+        return;
+      case 'pickPlayer':
+        resolvePickPlayer(s, prompt.player, choice.player);
+        return;
+      case 'takeCard':
+        resolveTakeCard(s, prompt.player, choice.card);
+        return;
+      case 'buildTaken':
+        resolveBuildTaken(s, prompt.player, choice.build);
+        return;
+      case 'freeBuild':
+        resolveFreeBuild(
+          s,
+          prompt.player,
+          (prompt as { source: UniqueBuildingId }).source,
+          choice.card,
+        );
+        return;
+      case 'sacrificeBuild':
+        resolveSacrificeBuild(
+          s,
+          prompt.player,
+          (prompt as { card: CardId }).card,
+          (prompt as { cost: number }).cost,
+          choice.sacrifice,
         );
         return;
       case 'buildPayment':

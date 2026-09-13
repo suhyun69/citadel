@@ -1,4 +1,4 @@
-import { characterDef, type CharacterId } from '@/data/types';
+import { characterDef, type CharacterId, type PresetId } from '@/data/types';
 import { buildLimitFor } from '@/engine/flow/turn';
 import { gameFromState } from '@/engine';
 import type { GameMaster } from '@/engine';
@@ -23,6 +23,8 @@ export interface PlayerSpec {
 export class GameBuilder {
   #seed = 0;
   #playerCount = 4;
+  #presetId: PresetId = 'basic' as PresetId;
+  #useRank9 = false;
   #crowned: PlayerId = playerId(0);
   #specs = new Map<number, PlayerSpec>();
   #characters = new Map<number, CharacterId>();
@@ -35,6 +37,11 @@ export class GameBuilder {
   }
   players(n: number): this {
     this.#playerCount = n;
+    return this;
+  }
+  preset(id: string, useRank9 = false): this {
+    this.#presetId = id as PresetId;
+    this.#useRank9 = useRank9;
     return this;
   }
   crown(p: number): this {
@@ -66,7 +73,12 @@ export class GameBuilder {
   }
 
   #buildState(): GameState {
-    const config = matchConfig({ seed: this.#seed, playerCount: this.#playerCount });
+    const config = matchConfig({
+      seed: this.#seed,
+      playerCount: this.#playerCount,
+      presetId: this.#presetId,
+      useRank9: this.#useRank9,
+    });
     const state = createMatchUnchecked(config);
 
     const used = new Set<string>();
@@ -113,7 +125,7 @@ export class GameBuilder {
     state.action = {
       rankCursor: turnRank,
       turn: null,
-      declared: { assassinTarget: null, thiefTarget: null },
+      declared: { assassinTarget: null, thiefTarget: null, warrants: [] },
     };
 
     if (this.#turn) {
@@ -127,6 +139,9 @@ export class GameBuilder {
         buildLimit: buildLimitFor(state, this.#turn.player),
         drawn: null,
         usedAbilities: [],
+        pendingSub: null,
+        paidBuilds: 0,
+        pendingSeizure: null,
       };
     }
 

@@ -32,12 +32,55 @@ export function legalChoices(prompt: Prompt): Choice[] | null {
     case 'discardCard':
       return prompt.options.map((card) => ({ type: 'discardCard', card }));
 
-    case 'warlordTarget': {
+    case 'warrants': {
+      // 인장 1장 + 허풍 2장. 8캐릭터 기준 105가지로 열거할 만하다.
+      const out: Choice[] = [];
+      for (const sealed of prompt.options) {
+        const rest = prompt.options.filter((id) => id !== sealed);
+        for (const decoys of combinations(rest, 2)) {
+          out.push({ type: 'warrants', sealed, decoys });
+        }
+      }
+      return out;
+    }
+
+    case 'seize':
+      return [
+        { type: 'seize', seize: true },
+        { type: 'seize', seize: false },
+      ];
+
+    case 'pickPlayer':
+      return prompt.options.map((player) => ({ type: 'pickPlayer', player }));
+
+    case 'takeCard':
+      return prompt.options.map((card) => ({ type: 'takeCard', card }));
+
+    case 'buildTaken':
+      return [
+        { type: 'buildTaken', build: true },
+        { type: 'buildTaken', build: false },
+      ];
+
+    case 'freeBuild':
+      return prompt.options.map((card) => ({ type: 'freeBuild', card }));
+
+    case 'sacrificeBuild': {
+      const out: Choice[] = prompt.options.map((sacrifice) => ({
+        type: 'sacrificeBuild' as const,
+        sacrifice,
+      }));
+      // 금화가 모자라면 "그냥 내기" 는 애초에 고를 수 없다.
+      if (prompt.canPayGold) out.push({ type: 'sacrificeBuild', sacrifice: null });
+      return out;
+    }
+
+    case 'rank8Target': {
       const out: Choice[] = prompt.options.map((o) => ({
-        type: 'warlordTarget' as const,
+        type: 'rank8Target' as const,
         target: { player: o.player, card: o.card },
       }));
-      out.push({ type: 'warlordTarget', target: null });
+      out.push({ type: 'rank8Target', target: null });
       return out;
     }
 

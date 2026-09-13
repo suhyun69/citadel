@@ -14,7 +14,7 @@ export function startSelection(state: GameState): void {
   state.round += 1;
   state.log.push({ t: 'roundStart', round: state.round, crowned: state.crowned });
 
-  const counts = discardCounts(state.config.playerCount);
+  const counts = discardCounts(state.config.characterIds.length, state.config.playerCount);
   const [shuffled, rng] = shuffle(state.rng, state.config.characterIds);
   state.rng = rng;
 
@@ -46,10 +46,8 @@ export function startSelection(state: GameState): void {
 
 /** 7인 게임에서 마지막으로 고르는 플레이어인가 (howto.md:70). */
 export function isLastPickerWithDiscard(state: GameState, sel: SelectionState): boolean {
-  return (
-    state.config.playerCount === LAST_PICKER_GETS_DISCARD_AT &&
-    sel.cursor === state.config.playerCount - 1
-  );
+  const at = LAST_PICKER_GETS_DISCARD_AT[state.config.characterIds.length];
+  return at !== undefined && state.config.playerCount === at && sel.cursor === at - 1;
 }
 
 /**
@@ -114,6 +112,6 @@ export function finishSelection(state: GameState): void {
   state.action = {
     rankCursor: 1,
     turn: null,
-    declared: { assassinTarget: null, thiefTarget: null },
+    declared: { assassinTarget: null, thiefTarget: null, warrants: [] },
   };
 }

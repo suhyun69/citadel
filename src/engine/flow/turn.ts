@@ -1,7 +1,8 @@
 import { buildingDef, characterDef, type UniqueBuildingId } from '@/data/types';
 import { makeCtx } from '../effects/ctx';
 import { buildingsProviding, collectHooks } from '../effects/registry';
-import { canBuild, hasSameTitle, isCityComplete } from '../rules/build';
+import { canBuild, hasSameTitle, isBuildFree, isCityComplete, sacrificeOptions } from '../rules/build';
+import { canSeize } from '../rules/seizure';
 import { draw, returnToBottom } from '../rules/deck';
 import type { MainAction, Prompt } from '../state/prompt';
 import { defIdOf, defOf, titleOf, type CardId, type PlayerId } from '../state/ids';
@@ -50,6 +51,9 @@ export function startTurn(state: GameState, player: PlayerId, characterId: impor
     buildLimit: buildLimitFor(state, player),
     drawn: null,
     usedAbilities: [],
+    pendingSub: null,
+    paidBuilds: 0,
+    pendingSeizure: null,
   } satisfies TurnState;
 
   const ctx = makeCtx(state, player);
@@ -161,9 +165,27 @@ export function applyBuild(state: GameState, card: CardId): void {
   const turn = state.action?.turn;
   if (!turn) throw new Error('진행 중인 차례가 없습니다');
 
+  const p = state.players[turn.playerId];
+  if (!p) throw new Error('알 수 없는 플레이어');
+
   const ctx = makeCtx(state, turn.playerId);
   const check = canBuild(state, turn.playerId, card, ctx);
   if (!check.ok) throw new Error(`건설할 수 없습니다: ${titleOf(card)} (${check.reason})`);
+
+  // 공동묘지처럼 건물을 부숴 대신할 수 있으면 먼저 물어본다.
+  const sacrificeable = sacrificeOptions(state, turn.playerId, defOf(card), ctx);
+  if (sacrificeable.length > 0) {
+    ctx.ask({
+      type: 'sacrificeBuild',
+      player: turn.playerId,
+      text: `${titleOf(card)}: 건물 1채를 부수고 짓거나, 금화 ${check.cost}닢을 냅니다`,
+      card,
+      cost: check.cost,
+      canPayGold: p.gold >= check.cost,
+      options: sacrificeable,
+    });
+    return;
+  }
 
   // 도적 소굴처럼 카드로도 낼 수 있는 건물은 지불 방식을 물어본다.
   if (check.maxCards > 0) {
@@ -188,6 +210,7 @@ export function placeBuilding(
   card: CardId,
   gold: number,
   cardsPaid: readonly CardId[],
+  opts: { countsTowardLimit?: boolean } = {},
 ): void {
   const turn = state.action?.turn;
   const p = state.players[player];
@@ -195,6 +218,21 @@ export function placeBuilding(
 
   const idx = p.hand.indexOf(card);
   if (idx === -1) throw new Error(`손에 없는 카드입니다: ${card}`);
+
+  // 치안판사가 이 건설을 노리고 있다면 여기서 한 번 멈춘다. 아직 아무것도
+  // 옮기지 않았으므로, 몰수되더라도 "건설비용을 돌려받는" 정산이 필요 없다.
+  const magistrate = canSeize(state, player, card, gold);
+  if (magistrate !== null && turn) {
+    turn.pendingSeizure = { card, gold, cardsPaid: [...cardsPaid] };
+    state.pending = {
+      type: 'seize',
+      player: magistrate,
+      text: `P${player} 가 ${titleOf(card)} 을(를) 짓습니다 — 영장을 공개할까요?`,
+      builder: player,
+      card,
+    };
+    return;
+  }
 
   // 건물이 도시에 들어가기 **전에** 기록해야 한다 — 중복 판정은 이 카드 자신을
   // 세면 안 되고, 할인은 이 건설을 설명하는 것이므로 건설 줄보다 앞서야 한다.
@@ -211,7 +249,12 @@ export function placeBuilding(
 
   p.gold -= gold;
   p.city.push({ card });
-  if (turn) turn.buildsUsed += 1;
+
+  // 교역상의 상업 건물이나 마구간은 "한 채 지었다" 로 세지 않는다.
+  const counts =
+    (opts.countsTowardLimit ?? true) && !isBuildFree(state, player, defOf(card), makeCtx(state, player));
+  if (turn && counts) turn.buildsUsed += 1;
+  if (turn && gold > 0) turn.paidBuilds += 1;
 
   state.log.push({ t: 'built', player, card, paid: gold });
   noteCompletion(state, player);
@@ -294,6 +337,8 @@ export function applyMainAction(state: GameState, action: MainAction): void {
     case 'useAbility':
     case 'useBuilding': {
       const ctx = makeCtx(state, turn.playerId);
+      const usedBefore = turn.usedAbilities.length;
+
       let handled = false;
       for (const h of collectHooks(state, turn.playerId)) {
         if (h.performAction?.(action, ctx)) {
@@ -301,6 +346,17 @@ export function applyMainAction(state: GameState, action: MainAction): void {
           break;
         }
       }
+
+      // 능력을 썼는데 사용 처리도 안 하고 질문도 안 띄웠다면, 그 선택지는
+      // 메뉴에 그대로 남아 봇이 영원히 다시 고른다. 무한 루프 대신
+      // 여기서 소리 나게 터뜨린다.
+      if (handled && !state.pending && turn.usedAbilities.length === usedBefore) {
+        const what = action.t === 'useBuilding' ? action.building : action.ability;
+        throw new Error(
+          `${what} 이(가) 아무 일도 하지 않았습니다 — markUsed 를 빠뜨렸을 가능성이 큽니다`,
+        );
+      }
+
       if (!handled) {
         const what =
           action.t === 'useBuilding' ? buildingDef(action.building).title : action.ability;

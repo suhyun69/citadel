@@ -3,6 +3,7 @@ import { HeuristicAgent, POLICIES } from '@/bot/heuristic';
 import { RandomAgent } from '@/bot/random';
 import { createGame } from '@/engine';
 import { playerId, type PlayerId } from '@/engine/state/ids';
+import type { PresetId } from '@/data/types';
 import type { GameState } from '@/engine/state/game-state';
 import { runMatch } from '@/runtime/runner';
 import { Aborted, Pacer } from './pacer';
@@ -11,6 +12,9 @@ export interface MatchSetup {
   seed: number;
   playerCount: number;
   botKind: string;
+  presetId: PresetId;
+  /** 9번 캐릭터를 쓸지. 카드마다 인원수 제약이 따로 있다. */
+  useRank9: boolean;
 }
 
 export interface Snapshot {
@@ -21,7 +25,13 @@ export interface Snapshot {
   running: boolean;
 }
 
-const DEFAULT_SETUP: MatchSetup = { seed: 0, playerCount: 4, botKind: 'normal' };
+const DEFAULT_SETUP: MatchSetup = {
+  seed: 0,
+  playerCount: 4,
+  botKind: 'normal',
+  presetId: 'basic' as PresetId,
+  useRank9: false,
+};
 
 /** 알림 간격. 60fps 보다 촘촘히 그릴 이유가 없다. */
 const NOTIFY_INTERVAL_MS = 16;

@@ -49,6 +49,8 @@ function buildingEffectText(effect: BuildingEffect): string {
       return `${KIND_LABEL[effect.as]} 건물로 간주 (+${effect.extra})`;
     case 'paidWithCards':
       return `금화 ${effect.gold} + 카드 ${effect.cards}장으로 지불`;
+    case 'sacrificed':
+      return `${cardTitle(effect.card)} 을(를) 부수고 ${cardTitle(effect.toBuild)} 건설`;
   }
 }
 
@@ -155,6 +157,42 @@ export function formatEvent(e: GameEvent): FormattedEvent | null {
         actor: e.by,
         tag: '파괴',
         detail: `P${e.target} 의 ${cardTitle(e.card)} (${e.paid}닢)`,
+        depth: 2,
+        tone: 'bad',
+      };
+
+    case 'warrantsIssued':
+      return {
+        actor: e.by,
+        tag: '영장',
+        detail: `${e.characters.map(characterName).join(', ')} (셋 중 하나에 인장)`,
+        depth: 2,
+        tone: 'bad',
+      };
+
+    case 'seized':
+      return {
+        actor: e.by,
+        tag: '몰수',
+        detail: `P${e.from} 가 짓던 ${cardTitle(e.card)}`,
+        depth: 2,
+        tone: 'bad',
+      };
+
+    case 'tookCard':
+      return {
+        actor: e.by,
+        tag: '탈취',
+        detail: `P${e.from} 의 ${cardTitle(e.card)}`,
+        depth: 2,
+        tone: 'bad',
+      };
+
+    case 'captured':
+      return {
+        actor: e.by,
+        tag: '점령',
+        detail: `P${e.from} 의 ${cardTitle(e.card)} (${e.paid}닢)`,
         depth: 2,
         tone: 'bad',
       };

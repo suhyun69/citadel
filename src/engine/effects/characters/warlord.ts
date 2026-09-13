@@ -30,9 +30,10 @@ export const warlord: GameHooks = {
       if (options.length === 0) return true;
 
       ctx.ask({
-        type: 'warlordTarget',
+        type: 'rank8Target',
         player: ctx.self,
         text: '파괴할 건물을 고르세요 (건너뛸 수 있습니다)',
+        purpose: 'destroy',
         options,
         canSkip: true,
       });

@@ -3,7 +3,13 @@ import { defIdOf, type CardId } from '../state/ids';
 import type { PlayerId } from '../state/ids';
 import type { GameState } from '../state/game-state';
 import type { GameHooks, HookSource } from './hooks';
+import { archduke } from './characters/archduke';
 import { architect } from './characters/architect';
+import { magistrate } from './characters/magistrate';
+import { marshal } from './characters/marshal';
+import { queen } from './characters/queen';
+import { trader } from './characters/trader';
+import { wizard } from './characters/wizard';
 import { assassin } from './characters/assassin';
 import { bishop } from './characters/bishop';
 import { king } from './characters/king';
@@ -11,7 +17,14 @@ import { magician } from './characters/magician';
 import { merchant } from './characters/merchant';
 import { thief } from './characters/thief';
 import { warlord } from './characters/warlord';
+import { capitol } from './buildings/capitol';
 import { dragon_gate } from './buildings/dragon_gate';
+import { framework } from './buildings/framework';
+import { graveyard } from './buildings/graveyard';
+import { great_wall } from './buildings/great_wall';
+import { park } from './buildings/park';
+import { poor_house } from './buildings/poor_house';
+import { stables } from './buildings/stables';
 import { factory } from './buildings/factory';
 import { ghost_district } from './buildings/ghost_district';
 import { imperial_treasury } from './buildings/imperial_treasury';
@@ -32,8 +45,14 @@ import { wishing_well } from './buildings/wishing_well';
  * `missingCards()` 가 그것을 프리셋 단위로 알려준다.
  */
 export const CHARACTER_EFFECTS: Partial<Record<CharacterId, GameHooks>> = {
+  archduke,
   assassin,
+  magistrate,
+  marshal,
+  queen,
   thief,
+  trader,
+  wizard,
   magician,
   king,
   bishop,
@@ -43,17 +62,24 @@ export const CHARACTER_EFFECTS: Partial<Record<CharacterId, GameHooks>> = {
 };
 
 export const BUILDING_EFFECTS: Partial<Record<UniqueBuildingId, GameHooks>> = {
+  capitol,
   dragon_gate,
   factory,
+  framework,
   ghost_district,
   imperial_treasury,
+  graveyard,
+  great_wall,
   keep,
   laboratory,
   library,
   map_room,
+  park,
+  poor_house,
   quarry,
   school_of_magic,
   smithy,
+  stables,
   statue,
   thieves_den,
   wishing_well,

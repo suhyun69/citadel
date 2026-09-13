@@ -1,4 +1,11 @@
-import { ALL_BUILDINGS, buildingDef, characterDef, presetDef, type PresetId } from '@/data/types';
+import {
+  ALL_BUILDINGS,
+  buildingDef,
+  characterDef,
+  presetDef,
+  type CharacterId,
+  type PresetId,
+} from '@/data/types';
 import { missingCards } from './effects/registry';
 import { seedRng, shuffle } from './rng';
 import { MAX_PLAYERS, MIN_PLAYERS, discardCounts } from './rules/selection-table';
@@ -14,9 +21,17 @@ export interface MatchOptions {
   seed: number;
   playerCount: number;
   presetId?: PresetId;
+  /**
+   * 9번 캐릭터를 쓸지. 규칙상 선택 사항이고(howto.md:161) 카드마다 인원수
+   * 제약이 따로 있다 — 왕비는 5명 미만 게임에 쓸 수 없다(howto.md:212).
+   */
+  useRank9?: boolean;
   targetCitySize?: number;
   maxRounds?: number;
 }
+
+/** 5명 미만 게임에 쓸 수 없는 캐릭터 (howto.md:212, 418). */
+const MIN_PLAYERS_FOR: Partial<Record<CharacterId, number>> = { queen: 5 };
 
 export function matchConfig(opts: MatchOptions): MatchConfig {
   const presetId = opts.presetId ?? ('basic' as PresetId);
@@ -25,11 +40,28 @@ export function matchConfig(opts: MatchOptions): MatchConfig {
   if (opts.playerCount < MIN_PLAYERS || opts.playerCount > MAX_PLAYERS) {
     throw new Error(`플레이어 수는 ${MIN_PLAYERS}~${MAX_PLAYERS}명이어야 합니다 (받은 값: ${opts.playerCount})`);
   }
-  discardCounts(opts.playerCount); // 지원하지 않는 인원수면 여기서 던진다
 
-  const characterIds = [...preset.characters].sort(
+
+  const useRank9 = opts.useRank9 ?? false;
+  if (useRank9 && !preset.rank9) {
+    throw new Error(`"${preset.name}" 에는 9번 캐릭터가 없습니다`);
+  }
+
+  const characterIds = [...preset.characters, ...(useRank9 && preset.rank9 ? [preset.rank9] : [])].sort(
     (a, b) => characterDef(a).rank - characterDef(b).rank,
   );
+
+  for (const id of characterIds) {
+    const need = MIN_PLAYERS_FOR[id];
+    if (need !== undefined && opts.playerCount < need) {
+      throw new Error(
+        `${characterDef(id).name} 은(는) ${need}명 미만 게임에 쓸 수 없습니다 ` +
+          `(받은 값: ${opts.playerCount}명)`,
+      );
+    }
+  }
+
+  discardCounts(characterIds.length, opts.playerCount); // 지원하지 않는 조합이면 여기서 던진다
 
   return {
     seed: opts.seed,

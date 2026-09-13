@@ -1,4 +1,5 @@
 import { KIND_LABEL_KO, characterDef, type BuildingKind, type CharacterId } from '@/data/types';
+import { draw } from '../../rules/deck';
 import { countIncome } from '../../rules/income';
 import { buildingsProviding } from '../registry';
 import type { MainAction } from '../../state/prompt';
@@ -28,7 +29,12 @@ export const matches = (action: MainAction, ability: string): boolean =>
  * 예로 들어 "건설 전에 받을지 후에 받을지" 고르라고 한다(howto.md:215).
  * 자동 지급으로 만들면 그 선택이 사라진다.
  */
-export function grantKindIncome(ctx: EffectCtx, kind: BuildingKind, ability: string): void {
+export function grantKindIncome(
+  ctx: EffectCtx,
+  kind: BuildingKind,
+  ability: string,
+  resource: 'gold' | 'card' = 'gold',
+): void {
   markUsed(ctx, ability);
 
   const n = countIncome(ctx.state, ctx.self, kind, ctx);
@@ -50,8 +56,17 @@ export function grantKindIncome(ctx: EffectCtx, kind: BuildingKind, ability: str
   }
 
   if (n <= 0) return;
-  p.gold += n;
-  ctx.push({ t: 'gained', player: ctx.self, gold: n, reason: `세금(${KIND_LABEL_KO[kind]})` });
+
+  const reason = `세금(${KIND_LABEL_KO[kind]})`;
+  if (resource === 'gold') {
+    p.gold += n;
+    ctx.push({ t: 'gained', player: ctx.self, gold: n, reason });
+    return;
+  }
+
+  const got = draw(ctx.state, n);
+  p.hand.push(...got);
+  ctx.push({ t: 'gained', player: ctx.self, cards: got.length, reason });
 }
 
 /** 이번 게임에 쓰이는 캐릭터 전부. */

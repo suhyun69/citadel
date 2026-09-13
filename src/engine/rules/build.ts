@@ -56,6 +56,35 @@ export function cardPaymentAllowance(
   return Math.min(allowed, usable);
 }
 
+/**
+ * 이 건설이 **건설 횟수에 포함되지 않는가**.
+ *
+ * 교역상(상업 건물)은 도시 밖에서 오지만, 마구간은 자기 자신을 지을 때
+ * 작동하므로 그때 아직 손에 있다 — 그래서 짓는 카드의 정의에서도 훅을 꺼낸다.
+ */
+export function isBuildFree(
+  state: GameState,
+  player: PlayerId,
+  def: BuildingDef,
+  ctx: EffectCtx,
+): boolean {
+  const own = (BUILDING_EFFECTS as Record<string, GameHooks | undefined>)[def.id];
+  if (own?.isBuildFree?.(def, ctx)) return true;
+  return collectHooks(state, player).some((h) => h.isBuildFree?.(def, ctx) === true);
+}
+
+/** 공동묘지처럼 자기 건물 1채를 부숴 건설비용을 대신할 수 있는가. */
+export function sacrificeOptions(
+  state: GameState,
+  player: PlayerId,
+  def: BuildingDef,
+  ctx: EffectCtx,
+): CardId[] {
+  const own = (BUILDING_EFFECTS as Record<string, GameHooks | undefined>)[def.id];
+  if (!own?.canSacrificeToBuild?.(def, ctx)) return [];
+  return (state.players[player]?.city ?? []).map((e) => e.card);
+}
+
 export interface BuildCheck {
   ok: boolean;
   cost: number;
@@ -76,7 +105,8 @@ export function canBuild(
 
   if (!p) return { ok: false, cost: 0, maxCards: 0, reason: 'notConstructible' };
   if (!isConstructible(def)) return { ok: false, cost: 0, maxCards: 0, reason: 'notConstructible' };
-  if (turn && turn.buildsUsed >= turn.buildLimit) {
+  // 건설 횟수에 포함되지 않는 건물은 한도에 걸리지 않는다.
+  if (turn && turn.buildsUsed >= turn.buildLimit && !isBuildFree(state, player, def, ctx)) {
     return { ok: false, cost: 0, maxCards: 0, reason: 'limitReached' };
   }
   if (hasSameTitle(state, player, def) && !allowsDuplicate(state, player, def, ctx)) {
@@ -85,7 +115,11 @@ export function canBuild(
 
   const cost = buildCost(state, player, def, ctx);
   const maxCards = Math.min(cardPaymentAllowance(state, player, def, ctx), cost);
-  if (p.gold + maxCards < cost) return { ok: false, cost, maxCards, reason: 'tooExpensive' };
+  const canSacrifice = sacrificeOptions(state, player, def, ctx).length > 0;
+
+  if (!canSacrifice && p.gold + maxCards < cost) {
+    return { ok: false, cost, maxCards, reason: 'tooExpensive' };
+  }
   return { ok: true, cost, maxCards };
 }
 

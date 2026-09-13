@@ -69,6 +69,11 @@ export function callNextRank(state: GameState): void {
 export function finishTurn(state: GameState): void {
   const a = state.action;
   if (!a?.turn) throw new Error('진행 중인 차례가 없습니다');
+
+  // 차례가 끝나는 시점에 반응하는 건물들 (구빈원·공원)
+  const ctx = makeCtx(state, a.turn.playerId);
+  for (const h of collectHooks(state, a.turn.playerId)) h.onTurnEnd?.(ctx);
+
   const slot = state.players[a.turn.playerId]?.character;
   if (slot) slot.turnDone = true;
   a.turn = null;

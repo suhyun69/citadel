@@ -50,12 +50,16 @@ export interface GameHooks {
   modifyGatherCards?(plan: { draw: number; keep: number }, ctx: EffectCtx): { draw: number; keep: number };
   /** 건축가: 3채 */
   modifyBuildLimit?(limit: number, ctx: EffectCtx): number;
+  /** 이 건물을 짓는 것이 건설 횟수에 포함되지 않는가. 교역상(상업), 마구간 */
+  isBuildFree?(def: BuildingDef, ctx: EffectCtx): boolean;
   /** 공장: 특수 건물 −1금화 */
   modifyBuildCost?(cost: number, def: BuildingDef, ctx: EffectCtx): number;
   /** 채석장: 이름이 같은 건물도 건설 가능 */
   allowsDuplicateTitle?(def: BuildingDef, ctx: EffectCtx): boolean;
   /** 도적 소굴: 카드로 지불 */
   paymentOptions?(def: BuildingDef, ctx: EffectCtx): PaymentOption[];
+  /** 공동묘지: 자기 건물 1채를 부수는 것으로 건설비용을 대신할 수 있는가 */
+  canSacrificeToBuild?(def: BuildingDef, ctx: EffectCtx): boolean;
   /** 마법학교: 수입 계산에서만 임의 종류로 간주 */
   countsAsKind?(entry: CityEntry, want: BuildingKind, ctx: EffectCtx): boolean;
   /**
@@ -68,6 +72,8 @@ export interface GameHooks {
   incomeKind?: BuildingKind;
   /** 주교(도시 전체) / 외성(자기 카드만): 8번 캐릭터 능력의 대상이 되지 않음 */
   immuneToRank8?(entry: CityEntry, ctx: EffectCtx): boolean;
+  /** 장성: 8번 캐릭터가 이 도시 건물에 손댈 때 더 내야 하는 금화 */
+  rank8Surcharge?(entry: CityEntry, ctx: EffectCtx): number;
   /** 차례 메뉴에 노출할 행동 */
   turnActions?(ctx: EffectCtx): MainAction[];
   /**
@@ -77,6 +83,8 @@ export interface GameHooks {
   performAction?(action: MainAction, ctx: EffectCtx): boolean;
   /** 왕: 왕관 획득(강제) */
   onTurnStart?(ctx: EffectCtx): void;
+  /** 구빈원(금화 0이면 +1), 공원(손패 0이면 +2) */
+  onTurnEnd?(ctx: EffectCtx): void;
   /** 암살당한 왕의 왕관 계승 */
   onRoundEnd?(ctx: EffectCtx): void;
   /** 도둑: 목표 캐릭터가 공개될 때 정산 */

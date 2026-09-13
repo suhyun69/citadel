@@ -57,7 +57,12 @@ export type GameEvent =
   | { t: 'paid'; player: PlayerId; gold: number; reason: string }
   | { t: 'built'; player: PlayerId; card: CardId; paid: number }
   | { t: 'destroyed'; by: PlayerId; target: PlayerId; card: CardId; paid: number }
+  | { t: 'captured'; by: PlayerId; from: PlayerId; card: CardId; paid: number }
   | { t: 'stolen'; by: PlayerId; from: PlayerId; gold: number }
+  | { t: 'tookCard'; by: PlayerId; from: PlayerId; card: CardId }
+  /** 영장 발부. 셋 중 어느 쪽에 인장이 있는지는 공개하지 않는다. */
+  | { t: 'warrantsIssued'; by: PlayerId; characters: CharacterId[] }
+  | { t: 'seized'; by: PlayerId; from: PlayerId; card: CardId }
   | { t: 'crownMoved'; to: PlayerId; reason: string }
   | { t: 'deckExhausted'; wanted: number; got: number }
   | { t: 'cityCompleted'; player: PlayerId; first: boolean }
@@ -75,4 +80,6 @@ export type BuildingEffect =
   /** 마법학교 — 수입 계산에서 다른 종류로 간주 */
   | { kind: 'countedAsKind'; as: BuildingKind; extra: number }
   /** 도적 소굴 — 건설비용을 카드로 지불 */
-  | { kind: 'paidWithCards'; card: CardId; gold: number; cards: number };
+  | { kind: 'paidWithCards'; card: CardId; gold: number; cards: number }
+  /** 골조·공동묘지 — 건물을 부수고 그 자리에 짓기 */
+  | { kind: 'sacrificed'; card: CardId; toBuild: CardId };

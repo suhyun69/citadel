@@ -109,8 +109,8 @@ export const normalPolicy: Policy = {
         return 3;
       }
 
-      case 'warlordTarget': {
-        if (candidate.type !== 'warlordTarget') return undefined;
+      case 'rank8Target': {
+        if (candidate.type !== 'rank8Target') return undefined;
         if (!candidate.target) return 0.5; // 건너뛰기
         const leader = leaderId(view);
         const opp = view.opponents.find((o) => o.id === candidate.target?.player);

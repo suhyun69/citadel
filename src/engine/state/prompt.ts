@@ -57,9 +57,10 @@ export interface PromptMap {
       | { mode: 'swap'; target: PlayerId }
       | { mode: 'redraw'; discard: readonly CardId[] };
   };
-  /** 장군: 파괴할 건물 (건너뛰기 가능) */
-  warlordTarget: {
+  /** 8번 캐릭터의 대상 고르기. 장군은 파괴, 육군대장은 점령이다. */
+  rank8Target: {
     d: {
+      purpose: 'destroy' | 'capture';
       options: readonly { player: PlayerId; card: CardId; price: number }[];
       canSkip: true;
     };
@@ -69,6 +70,47 @@ export interface PromptMap {
   discardCard: {
     d: { source: UniqueBuildingId; options: readonly CardId[] };
     c: { card: CardId };
+  };
+  /** 치안판사: 영장 3장을 붙일 캐릭터 고르기 (하나만 인장) */
+  warrants: {
+    d: { options: readonly CharacterId[] };
+    c: { sealed: CharacterId; decoys: readonly CharacterId[] };
+  };
+  /** 치안판사: 몰수 대상이 건설했다 — 영장을 공개할지 */
+  seize: {
+    d: { builder: PlayerId; card: CardId };
+    c: { seize: boolean };
+  };
+  /** 마법사: 손패를 볼 상대 고르기 */
+  pickPlayer: {
+    d: { purpose: 'wizardTake'; options: readonly PlayerId[] };
+    c: { player: PlayerId };
+  };
+  /** 마법사: 상대 손패에서 1장 가져오기 */
+  takeCard: {
+    d: { from: PlayerId; options: readonly CardId[] };
+    c: { card: CardId };
+  };
+  /** 마법사: 가져온 카드를 바로 지을지 */
+  buildTaken: {
+    d: { card: CardId; cost: number };
+    c: { build: boolean };
+  };
+  /** 골조: 무너뜨리고 공짜로 지을 건물 고르기 */
+  freeBuild: {
+    d: { source: UniqueBuildingId; options: readonly CardId[] };
+    c: { card: CardId };
+  };
+  /** 공동묘지: 건설비용 대신 자기 건물 1채를 부술지 */
+  sacrificeBuild: {
+    d: {
+      card: CardId;
+      cost: number;
+      /** 금화로 낼 여유가 있는가. 없으면 부수는 수밖에 없다. */
+      canPayGold: boolean;
+      options: readonly CardId[];
+    };
+    c: { sacrifice: CardId | null };
   };
   /** 도적 소굴: 건설비용을 금화/카드로 나눠 내기 */
   buildPayment: {

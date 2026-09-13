@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { GameMaster } from '@/engine';
 import { checkInvariants } from '@/engine/rules/invariants';
-import { destroyPrice, destroyTargets } from '@/engine/rules/rank8';
+import { basePrice, destroyTargets } from '@/engine/rules/rank8';
 import { playerId } from '@/engine/state/ids';
 import type { Choice } from '@/engine/state/prompt';
 import { aGame, card } from './helpers/builder';
@@ -326,9 +326,9 @@ describe('건축가', () => {
 
 describe('장군', () => {
   it('파괴비용은 건설비용보다 1닢 적고, 1닢짜리는 공짜다', () => {
-    expect(destroyPrice(card('watchtower'))).toBe(0); // 망루 1닢
-    expect(destroyPrice(card('prison'))).toBe(1); // 감옥 2닢
-    expect(destroyPrice(card('palace'))).toBe(4); // 궁전 5닢
+    expect(basePrice(card('watchtower'))).toBe(0); // 망루 1닢
+    expect(basePrice(card('prison'))).toBe(1); // 감옥 2닢
+    expect(basePrice(card('palace'))).toBe(4); // 궁전 5닢
   });
 
   it('건물을 파괴하면 카드가 더미 맨 아래로 간다', () => {
@@ -342,9 +342,9 @@ describe('장군', () => {
       .build();
 
     useAbility(s, 'warlord.destroy');
-    expect(s.awaiting()?.prompt()?.type).toBe('warlordTarget');
+    expect(s.awaiting()?.prompt()?.type).toBe('rank8Target');
     answer(s, {
-      type: 'warlordTarget',
+      type: 'rank8Target',
       target: { player: playerId(1), card: card('prison') },
     });
 

@@ -81,6 +81,15 @@ export interface TurnState {
    * (실험실·대장간)을 같은 방식으로 다룬다.
    */
   usedAbilities: string[];
+  /**
+   * 다단계 능력의 중간 상태. 마법사는 상대 고르기 → 카드 고르기 →
+   * 바로 지을지까지 세 단계라, 그 사이 선택을 들고 있어야 한다.
+   */
+  pendingSub: { kind: 'wizardTarget'; player: PlayerId } | { kind: 'wizardTaken'; card: CardId } | null;
+  /** 이번 차례에 **금화를 내고** 지은 건물 수. 치안판사는 그중 첫 채만 노린다. */
+  paidBuilds: number;
+  /** 치안판사의 판단을 기다리며 멈춰 있는 건설. */
+  pendingSeizure: { card: CardId; gold: number; cardsPaid: CardId[] } | null;
 }
 
 export interface ActionPhaseState {
@@ -91,6 +100,11 @@ export interface ActionPhaseState {
   declared: {
     assassinTarget: CharacterId | null;
     thiefTarget: CharacterId | null;
+    /**
+     * 치안판사의 영장. 셋 중 인장(sealed)이 찍힌 하나만 실제 몰수 대상이고,
+     * 나머지 둘은 허풍이다 — 엔진은 읽지 않지만 기록해 둔다.
+     */
+    warrants: { character: CharacterId; sealed: boolean }[];
   };
 }
 

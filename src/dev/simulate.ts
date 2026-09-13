@@ -21,6 +21,7 @@ interface Args {
   players: number[];
   verbose: boolean;
   preset: PresetId;
+  useRank9: boolean;
 }
 
 function parseArgs(argv: string[]): Args {
@@ -33,6 +34,7 @@ function parseArgs(argv: string[]): Args {
     seeds: Number(get('--seeds') ?? 1),
     players: (get('--players') ?? '4').split(',').map(Number),
     verbose: argv.includes('--verbose'),
+    useRank9: argv.includes('--rank9'),
     preset: (get('--preset') ?? 'basic') as PresetId,
   };
 }
@@ -83,7 +85,7 @@ async function main(): Promise<void> {
         Array.from({ length: playerCount }, (_, n) => new RandomAgent(`bot${n}`, seed * 100 + n)),
       );
       const master = await runMatch(
-        createGame({ seed, playerCount, presetId: args.preset }),
+        createGame({ seed, playerCount, presetId: args.preset, useRank9: args.useRank9 }),
         agents,
         { verifyInvariants: true },
       );

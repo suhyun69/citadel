@@ -31,12 +31,15 @@ export function lineOf(e: FormattedEvent): string {
 }
 
 /**
- * 교환의 한쪽. 당사자 시점이면 카드 이름을, 제3자 시점이면 장수만 보여준다.
- * 목록이 비어 있는데 장수가 남아 있다면 redactEvent 가 가린 것이다.
+ * 교환의 한쪽 묶음. `[P0 : 마법학교, 부두]` 처럼 **교환이 끝난 뒤 그 카드를
+ * 갖게 되는 사람**을 앞에 적는다.
+ *
+ * 당사자 시점이면 카드 이름을, 제3자 시점이면 장수만 보여준다. 목록이
+ * 비어 있는데 장수가 남아 있다면 redactEvent 가 가린 것이다.
  */
-function swapSide(label: string, cards: readonly CardId[], count: number): string {
-  if (count === 0) return `${label} 없음`;
-  return cards.length > 0 ? `${label} ${cards.map(cardTitle).join(', ')}` : `${label} ${count}장`;
+function swapSide(owner: number, cards: readonly CardId[], count: number): string {
+  const what = count === 0 ? '없음' : cards.length > 0 ? cards.map(cardTitle).join(', ') : `${count}장`;
+  return `[P${owner} : ${what}]`;
 }
 
 /**
@@ -90,7 +93,9 @@ export function formatEvent(e: GameEvent): FormattedEvent | null {
       return {
         actor: e.by,
         tag: '마술사 교환',
-        detail: `P${e.partner} · ${swapSide('준', e.given, e.givenCount)} · ${swapSide('받은', e.received, e.receivedCount)}`,
+        detail:
+          `${swapSide(e.partner, e.given, e.givenCount)} <-> ` +
+          `${swapSide(e.by, e.received, e.receivedCount)}`,
         depth: 2,
       };
 

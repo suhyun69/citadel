@@ -47,6 +47,37 @@ describe('관전 화면이 의존하는 성질', () => {
   });
 });
 
+describe('마술사 교환 문구', () => {
+  const swap = (given: string[], received: string[], redacted = false) =>
+    lineOf(
+      formatEvent({
+        t: 'handSwapped',
+        by: playerId(3),
+        partner: playerId(0),
+        given: (redacted ? [] : given) as never,
+        received: (redacted ? [] : received) as never,
+        givenCount: given.length,
+        receivedCount: received.length,
+      })!,
+    );
+
+  it('교환 뒤 누가 무엇을 갖게 되는지로 적는다', () => {
+    expect(swap(['school_of_magic#1', 'docks#1'], ['temple#1', 'watchtower#1'])).toBe(
+      'P3 [마술사 교환] [P0 : 마법학교, 부두] <-> [P3 : 사원, 망루]',
+    );
+  });
+
+  it('제3자 시점에서는 장수만 남는다', () => {
+    expect(swap(['school_of_magic#1', 'docks#1'], ['temple#1'], true)).toBe(
+      'P3 [마술사 교환] [P0 : 2장] <-> [P3 : 1장]',
+    );
+  });
+
+  it('빈 손패는 없음으로 적는다', () => {
+    expect(swap([], ['temple#1'])).toBe('P3 [마술사 교환] [P0 : 없음] <-> [P3 : 사원]');
+  });
+});
+
 describe('Pacer', () => {
   it('일시정지하면 한 스텝을 부를 때까지 멈춘다', async () => {
     const pacer = new Pacer();

@@ -1,6 +1,12 @@
-import { KIND_LABEL_KO, characterDef, type BuildingKind, type CharacterId } from '@/data/types';
+import {
+  KIND_LABEL_KO,
+  buildingDef,
+  characterDef,
+  type BuildingKind,
+  type CharacterId,
+} from '@/data/types';
 import { defOf, titleOf, type CardId } from '@/engine/state/ids';
-import type { GameEvent } from '@/engine/state/event';
+import type { BuildingEffect, GameEvent } from '@/engine/state/event';
 
 export const characterName = (id: CharacterId): string => characterDef(id).name;
 
@@ -28,6 +34,22 @@ export function lineOf(e: FormattedEvent): string {
   const head = e.actor === undefined ? '' : `P${e.actor} `;
   const tag = e.tag ? `[${e.tag}] ` : '';
   return `${head}${tag}${e.detail}`;
+}
+
+/** 특수 건물이 무엇을 바꿨는지 한 마디로. */
+function buildingEffectText(effect: BuildingEffect): string {
+  switch (effect.kind) {
+    case 'keptAllDrawn':
+      return `뽑은 ${effect.cards}장을 모두 보유`;
+    case 'discounted':
+      return `${cardTitle(effect.card)} 건설비용 −${effect.saved}닢`;
+    case 'builtDuplicate':
+      return `${cardTitle(effect.card)} 중복 건설`;
+    case 'countedAsKind':
+      return `${KIND_LABEL[effect.as]} 건물로 간주 (+${effect.extra})`;
+    case 'paidWithCards':
+      return `금화 ${effect.gold} + 카드 ${effect.cards}장으로 지불`;
+  }
 }
 
 /**
@@ -96,6 +118,14 @@ export function formatEvent(e: GameEvent): FormattedEvent | null {
         detail:
           `${swapSide(e.partner, e.given, e.givenCount)} <-> ` +
           `${swapSide(e.by, e.received, e.receivedCount)}`,
+        depth: 2,
+      };
+
+    case 'buildingEffect':
+      return {
+        actor: e.player,
+        tag: buildingDef(e.building).title,
+        detail: buildingEffectText(e.effect),
         depth: 2,
       };
 

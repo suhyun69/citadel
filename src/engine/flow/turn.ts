@@ -1,10 +1,10 @@
-import { buildingDef, characterDef } from '@/data/types';
+import { buildingDef, characterDef, type UniqueBuildingId } from '@/data/types';
 import { makeCtx } from '../effects/ctx';
-import { collectHooks } from '../effects/registry';
-import { canBuild, isCityComplete } from '../rules/build';
+import { buildingsProviding, collectHooks } from '../effects/registry';
+import { canBuild, hasSameTitle, isCityComplete } from '../rules/build';
 import { draw, returnToBottom } from '../rules/deck';
 import type { MainAction, Prompt } from '../state/prompt';
-import { defIdOf, titleOf, type CardId, type PlayerId } from '../state/ids';
+import { defIdOf, defOf, titleOf, type CardId, type PlayerId } from '../state/ids';
 import type { GameState, TurnState } from '../state/game-state';
 
 /** 자원 얻기 행동의 기본값 (howto.md:75). */
@@ -105,6 +105,18 @@ export function applyKeepDrawn(state: GameState, keep: readonly CardId[]): void 
   p.hand.push(...keep);
   returnToBottom(state, rest);
 
+  // 도서관 — 원래는 1장만 남기는데 전부 가져갔다면 그 이유를 적는다
+  if (keep.length > GATHER_KEEP) {
+    for (const b of buildingsProviding(state, turn.playerId, 'modifyGatherCards')) {
+      state.log.push({
+        t: 'buildingEffect',
+        player: turn.playerId,
+        building: b.id,
+        effect: { kind: 'keptAllDrawn', cards: keep.length },
+      });
+    }
+  }
+
   state.log.push({ t: 'gained', player: turn.playerId, cards: keep.length, reason: '자원얻기' });
   turn.drawn = null;
   turn.stage = 'main';
@@ -183,6 +195,11 @@ export function placeBuilding(
 
   const idx = p.hand.indexOf(card);
   if (idx === -1) throw new Error(`손에 없는 카드입니다: ${card}`);
+
+  // 건물이 도시에 들어가기 **전에** 기록해야 한다 — 중복 판정은 이 카드 자신을
+  // 세면 안 되고, 할인은 이 건설을 설명하는 것이므로 건설 줄보다 앞서야 한다.
+  noteBuildEffects(state, player, card, gold, cardsPaid);
+
   p.hand.splice(idx, 1);
 
   for (const paid of cardsPaid) {
@@ -198,6 +215,57 @@ export function placeBuilding(
 
   state.log.push({ t: 'built', player, card, paid: gold });
   noteCompletion(state, player);
+}
+
+/**
+ * 이 건설에 관여한 특수 건물을 로그에 남긴다.
+ *
+ * 수치만 바꾸는 효과들이라 그냥 두면 로그에 흔적이 없다 — 5닢짜리가 4닢에
+ * 지어지거나 같은 건물이 두 채 서는 것이 규칙 위반처럼 보인다.
+ */
+function noteBuildEffects(
+  state: GameState,
+  player: PlayerId,
+  card: CardId,
+  gold: number,
+  cardsPaid: readonly CardId[],
+): void {
+  const def = defOf(card);
+
+  // 공장 — 낸 값이 정가보다 적으면 누가 깎아줬는지 적는다
+  const saved = (def.cost ?? 0) - (gold + cardsPaid.length);
+  if (saved > 0) {
+    for (const b of buildingsProviding(state, player, 'modifyBuildCost')) {
+      state.log.push({
+        t: 'buildingEffect',
+        player,
+        building: b.id,
+        effect: { kind: 'discounted', card, saved },
+      });
+    }
+  }
+
+  // 채석장 — 이미 같은 이름이 서 있는데도 지을 수 있었던 이유
+  if (hasSameTitle(state, player, def)) {
+    for (const b of buildingsProviding(state, player, 'allowsDuplicateTitle')) {
+      state.log.push({
+        t: 'buildingEffect',
+        player,
+        building: b.id,
+        effect: { kind: 'builtDuplicate', card },
+      });
+    }
+  }
+
+  // 도적 소굴 — 카드로 낸 몫. 건설 줄의 "N닢" 은 금화만 세므로 여기서 보충한다.
+  if (cardsPaid.length > 0) {
+    state.log.push({
+      t: 'buildingEffect',
+      player,
+      building: def.id as UniqueBuildingId,
+      effect: { kind: 'paidWithCards', card, gold, cards: cardsPaid.length },
+    });
+  }
 }
 
 /** 도시가 방금 완성되었는지 기록한다. 선완성 4점 / 후완성 2점의 근거. */

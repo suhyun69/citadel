@@ -1,7 +1,8 @@
 import { KIND_LABEL_KO, characterDef, type BuildingKind, type CharacterId } from '@/data/types';
 import { countIncome } from '../../rules/income';
+import { buildingsProviding } from '../registry';
 import type { MainAction } from '../../state/prompt';
-import { playerId, type PlayerId } from '../../state/ids';
+import { defOf, playerId, type PlayerId } from '../../state/ids';
 import type { GameState } from '../../state/game-state';
 import type { EffectCtx } from '../hooks';
 
@@ -29,10 +30,26 @@ export const matches = (action: MainAction, ability: string): boolean =>
  */
 export function grantKindIncome(ctx: EffectCtx, kind: BuildingKind, ability: string): void {
   markUsed(ctx, ability);
+
   const n = countIncome(ctx.state, ctx.self, kind, ctx);
-  if (n <= 0) return;
   const p = ctx.state.players[ctx.self];
   if (!p) return;
+
+  // 마법학교 — 실제 종류로 센 것보다 많다면 누가 종류를 빌려줬는지 적는다.
+  // countIncome 은 조회용으로도 불리므로 지급이 일어나는 여기서만 남긴다.
+  const natural = p.city.filter((entry) => defOf(entry.card).kind === kind).length;
+  if (n > natural) {
+    for (const b of buildingsProviding(ctx.state, ctx.self, 'countsAsKind')) {
+      ctx.push({
+        t: 'buildingEffect',
+        player: ctx.self,
+        building: b.id,
+        effect: { kind: 'countedAsKind', as: kind, extra: n - natural },
+      });
+    }
+  }
+
+  if (n <= 0) return;
   p.gold += n;
   ctx.push({ t: 'gained', player: ctx.self, gold: n, reason: `세금(${KIND_LABEL_KO[kind]})` });
 }

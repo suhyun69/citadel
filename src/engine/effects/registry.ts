@@ -1,5 +1,5 @@
 import type { CharacterId, PresetDef, UniqueBuildingId } from '@/data/types';
-import { defIdOf } from '../state/ids';
+import { defIdOf, type CardId } from '../state/ids';
 import type { PlayerId } from '../state/ids';
 import type { GameState } from '../state/game-state';
 import type { GameHooks, HookSource } from './hooks';
@@ -123,3 +123,19 @@ export const isPlayable = (preset: PresetDef): boolean => {
   const m = missingCards(preset);
   return m.characters.length === 0 && m.uniques.length === 0;
 };
+
+/**
+ * 이 플레이어의 도시에서 해당 훅을 제공하는 특수 건물.
+ *
+ * 로그에 "무엇이 이 효과를 냈는지" 를 적으려면 훅의 출처가 필요하다.
+ * collectHooks 는 출처를 잃어버리므로 이쪽을 쓴다.
+ */
+export function buildingsProviding(
+  state: GameState,
+  player: PlayerId,
+  hook: keyof GameHooks,
+): { id: UniqueBuildingId; card: CardId }[] {
+  return collectHookSources(state, player)
+    .filter((s) => s.from.kind === 'building' && s.hooks[hook] !== undefined)
+    .map((s) => ({ id: s.from.id as UniqueBuildingId, card: (s.from as { card: CardId }).card }));
+}

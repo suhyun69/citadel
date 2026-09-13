@@ -360,3 +360,138 @@ describe('게임 종료 점수', () => {
     expect(scoreFor(s.snapshot(), playerId(0)).uniqueBonus).toBe(2);
   });
 });
+
+/**
+ * 수치만 조용히 바꾸는 효과들은 그냥 두면 로그에 흔적이 없다 — 5닢짜리가
+ * 4닢에 지어지거나 같은 건물이 두 채 서는 것이 규칙 위반처럼 보인다.
+ *
+ * 이 기록은 반드시 **적용 시점**에만 남아야 한다. gatherPlan·countIncome·
+ * canBuild 는 선택지를 만들 때마다 불리는 조회 함수라, 거기서 남기면
+ * 같은 줄이 여러 번 찍힌다. 그래서 개수까지 확인한다.
+ */
+describe('특수 건물이 무엇을 바꿨는지 기록한다', () => {
+  const effects = (gm: GameMaster) =>
+    gm.log().filter((e) => e.t === 'buildingEffect');
+
+  it('도서관 — 뽑은 카드를 모두 가졌다고 남긴다', () => {
+    const gm = aGame()
+      .players(4)
+      .player(0, { city: [card('library')] })
+      .assign(0, 'merchant')
+      .atTurn(0, 'gather')
+      .build();
+
+    answer(gm, { type: 'gatherMode', mode: 'cards' });
+    toPrompt(gm);
+
+    expect(effects(gm)).toEqual([
+      {
+        t: 'buildingEffect',
+        player: playerId(0),
+        building: 'library',
+        effect: { kind: 'keptAllDrawn', cards: 2 },
+      },
+    ]);
+  });
+
+  it('공장 — 깎아준 만큼을 남긴다', () => {
+    const gm = aGame()
+      .players(4)
+      .player(0, { gold: 10, hand: [card('statue')], city: [card('factory')] })
+      .assign(0, 'merchant')
+      .atTurn(0)
+      .build();
+
+    act(gm, { t: 'build', card: card('statue') });
+
+    expect(effects(gm)).toEqual([
+      {
+        t: 'buildingEffect',
+        player: playerId(0),
+        building: 'factory',
+        effect: { kind: 'discounted', card: card('statue'), saved: 1 },
+      },
+    ]);
+  });
+
+  it('채석장 — 중복 건설이었음을 남긴다', () => {
+    const gm = aGame()
+      .players(4)
+      .player(0, { gold: 5, hand: [card('temple', 2)], city: [card('temple', 1), card('quarry')] })
+      .assign(0, 'merchant')
+      .atTurn(0)
+      .build();
+
+    act(gm, { t: 'build', card: card('temple', 2) });
+
+    expect(effects(gm)).toEqual([
+      {
+        t: 'buildingEffect',
+        player: playerId(0),
+        building: 'quarry',
+        effect: { kind: 'builtDuplicate', card: card('temple', 2) },
+      },
+    ]);
+  });
+
+  it('마법학교 — 어느 종류로 몇 채를 빌려줬는지 남긴다', () => {
+    const gm = aGame()
+      .players(4)
+      .player(0, { gold: 0, city: [card('tavern'), card('school_of_magic')] })
+      .assign(0, 'merchant')
+      .atTurn(0)
+      .build();
+
+    useAbility(gm, 'merchant.income');
+
+    expect(effects(gm)).toEqual([
+      {
+        t: 'buildingEffect',
+        player: playerId(0),
+        building: 'school_of_magic',
+        effect: { kind: 'countedAsKind', as: 'trade', extra: 1 },
+      },
+    ]);
+    expect(gm.player(playerId(0)).gold()).toBe(2); // 술집 + 마법학교
+  });
+
+  it('도적 소굴 — 금화와 카드를 어떻게 나눠 냈는지 남긴다', () => {
+    const gm = aGame()
+      .players(4)
+      .player(0, {
+        gold: 2,
+        hand: [card('thieves_den'), card('temple'), card('chapel'), card('manor'), card('castle')],
+      })
+      .assign(0, 'merchant')
+      .atTurn(0)
+      .build();
+
+    act(gm, { t: 'build', card: card('thieves_den') });
+    answer(gm, {
+      type: 'buildPayment',
+      gold: 2,
+      cards: [card('temple'), card('chapel'), card('manor'), card('castle')],
+    });
+
+    expect(effects(gm)).toEqual([
+      {
+        t: 'buildingEffect',
+        player: playerId(0),
+        building: 'thieves_den',
+        effect: { kind: 'paidWithCards', card: card('thieves_den'), gold: 2, cards: 4 },
+      },
+    ]);
+  });
+
+  it('효과가 없으면 아무것도 남기지 않는다', () => {
+    const gm = aGame()
+      .players(4)
+      .player(0, { gold: 10, hand: [card('temple')] })
+      .assign(0, 'merchant')
+      .atTurn(0)
+      .build();
+
+    act(gm, { t: 'build', card: card('temple') });
+    expect(effects(gm)).toEqual([]);
+  });
+});

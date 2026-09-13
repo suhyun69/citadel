@@ -1,4 +1,4 @@
-import type { CharacterId } from '@/data/types';
+import type { BuildingKind, CharacterId, UniqueBuildingId } from '@/data/types';
 import type { CardId, PlayerId } from './ids';
 
 /**
@@ -37,6 +37,22 @@ export type GameEvent =
       givenCount: number;
       receivedCount: number;
     }
+  /**
+   * 특수 건물이 조용히 바꾼 것.
+   *
+   * 실험실·대장간처럼 **행동으로 쓰는** 건물은 이미 자기 이벤트를 남긴다.
+   * 여기 담기는 것은 수치를 슬쩍 고치는 쪽이다 — 그냥 두면 로그만 봐서는
+   * 왜 싸게 지어졌는지, 왜 같은 건물을 두 채 지었는지 알 수 없다.
+   *
+   * ⚠ 반드시 **적용 시점**에만 남긴다. gatherPlan·countIncome 같은 조회
+   *   함수는 여러 번 불리므로 거기서 남기면 로그가 중복된다.
+   */
+  | {
+      t: 'buildingEffect';
+      player: PlayerId;
+      building: UniqueBuildingId;
+      effect: BuildingEffect;
+    }
   | { t: 'gained'; player: PlayerId; gold?: number; cards?: number; reason: string }
   | { t: 'paid'; player: PlayerId; gold: number; reason: string }
   | { t: 'built'; player: PlayerId; card: CardId; paid: number }
@@ -47,3 +63,16 @@ export type GameEvent =
   | { t: 'cityCompleted'; player: PlayerId; first: boolean }
   | { t: 'roundEnd'; round: number }
   | { t: 'gameOver'; winner: PlayerId };
+
+/** 특수 건물이 실제로 바꾼 내용. 문구는 화면이 만든다. */
+export type BuildingEffect =
+  /** 도서관 — 뽑은 카드를 전부 보유 */
+  | { kind: 'keptAllDrawn'; cards: number }
+  /** 공장 — 특수 건물 할인 */
+  | { kind: 'discounted'; card: CardId; saved: number }
+  /** 채석장 — 동명 건물 건설 */
+  | { kind: 'builtDuplicate'; card: CardId }
+  /** 마법학교 — 수입 계산에서 다른 종류로 간주 */
+  | { kind: 'countedAsKind'; as: BuildingKind; extra: number }
+  /** 도적 소굴 — 건설비용을 카드로 지불 */
+  | { kind: 'paidWithCards'; card: CardId; gold: number; cards: number };

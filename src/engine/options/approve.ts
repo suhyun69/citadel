@@ -112,6 +112,58 @@ export function approveChoice(state: GameState, prompt: Prompt, choice: Choice):
         : reject('부술 수 없는 건물입니다');
     }
 
+    case 'tuckCard':
+      return choice.type === 'tuckCard' && prompt.options.includes(choice.card)
+        ? ACCEPTED
+        : reject('아래에 깔 수 없는 카드입니다');
+
+    case 'armoryTarget': {
+      if (choice.type !== 'armoryTarget') return reject('답의 종류가 맞지 않습니다');
+      const target = choice.target;
+      return prompt.options.some((o) => o.player === target.player && o.card === target.card)
+        ? ACCEPTED
+        : reject('파괴할 수 없는 건물입니다');
+    }
+
+    case 'theaterSwap':
+      if (choice.type !== 'theaterSwap') return reject('답의 종류가 맞지 않습니다');
+      if (choice.target === null) return ACCEPTED;
+      return prompt.options.includes(choice.target)
+        ? ACCEPTED
+        : reject('캐릭터를 바꿀 수 없는 상대입니다');
+
+    case 'abbotIncome': {
+      if (choice.type !== 'abbotIncome') return reject('답의 종류가 맞지 않습니다');
+      if (choice.gold < 0 || choice.cards < 0) return reject('음수로 받을 수 없습니다');
+      return choice.gold + choice.cards === prompt.total
+        ? ACCEPTED
+        : reject(`종교 건물 ${prompt.total}채만큼 나눠 받아야 합니다`);
+    }
+
+    case 'emperorTribute': {
+      if (choice.type !== 'emperorTribute') return reject('답의 종류가 맞지 않습니다');
+      if (choice.take === 'gold') {
+        return prompt.canGold ? ACCEPTED : reject('가져올 금화가 없습니다');
+      }
+      return prompt.canCard ? ACCEPTED : reject('가져올 카드가 없습니다');
+    }
+
+    case 'blackmailTokens': {
+      if (choice.type !== 'blackmailTokens') return reject('답의 종류가 맞지 않습니다');
+      if (choice.sealed === choice.decoy) {
+        return reject('같은 캐릭터에 토큰 2개를 붙일 수 없습니다');
+      }
+      return [choice.sealed, choice.decoy].every((id) => prompt.options.includes(id))
+        ? ACCEPTED
+        : reject('협박할 수 없는 캐릭터입니다');
+    }
+
+    case 'bribe':
+      return choice.type === 'bribe' ? ACCEPTED : reject('답의 종류가 맞지 않습니다');
+
+    case 'revealBlackmail':
+      return choice.type === 'revealBlackmail' ? ACCEPTED : reject('답의 종류가 맞지 않습니다');
+
     case 'magicianMode': {
       if (choice.type !== 'magicianMode') return reject('답의 종류가 맞지 않습니다');
       if (choice.mode === 'swap') {

@@ -1,6 +1,6 @@
 import type { GameEvent } from '../state/event';
 import type { CardId } from '../state/ids';
-import type { GameState } from '../state/game-state';
+import type { CityEntry, GameState } from '../state/game-state';
 
 /**
  * 건물 카드 더미에서 뽑는다. 앞에서 뽑고 뒤로 넣는다.
@@ -21,4 +21,15 @@ export function draw(state: GameState, count: number): CardId[] {
 /** 버린 카드·파괴된 카드는 모두 더미 맨 아래로 간다 (howto.md:75, 99). */
 export function returnToBottom(state: GameState, cards: readonly CardId[]): void {
   state.deck.push(...cards);
+}
+
+/**
+ * 도시에서 빠진 건물 1채를 더미 맨 아래로 보낸다.
+ *
+ * 박물관 아래 깔린 카드도 **함께** 내려간다(howto.md 박물관). 도시에서
+ * 카드를 뽑아낸 자리에서는 항상 이쪽을 부를 것 — returnToBottom 을 직접
+ * 부르면 박물관 밑의 카드가 조용히 증발한다.
+ */
+export function discardEntry(state: GameState, entry: CityEntry): void {
+  returnToBottom(state, [entry.card, ...(entry.beneath ?? [])]);
 }

@@ -18,7 +18,7 @@ export type GameEvent =
    * 암살자·도둑의 지목. 규칙상 **공개 선언**이므로(howto.md:220, 251)
    * 누구에게도 가려지지 않는다.
    */
-  | { t: 'declared'; by: PlayerId; purpose: 'assassinate' | 'rob'; target: CharacterId }
+  | { t: 'declared'; by: PlayerId; purpose: 'assassinate' | 'rob' | 'bewitch'; target: CharacterId }
   /**
    * 마술사의 손패 교환.
    *
@@ -62,7 +62,18 @@ export type GameEvent =
   | { t: 'tookCard'; by: PlayerId; from: PlayerId; card: CardId }
   /** 영장 발부. 셋 중 어느 쪽에 인장이 있는지는 공개하지 않는다. */
   | { t: 'warrantsIssued'; by: PlayerId; characters: CharacterId[] }
+  /** 협박 토큰 부착. 둘 중 어느 쪽이 꽃 자수인지는 공개하지 않는다. */
+  | { t: 'blackmailed'; by: PlayerId; characters: CharacterId[] }
+  /** 협박 토큰 공개. 여기서 처음으로 꽃 자수였는지가 드러난다. */
+  | { t: 'blackmailRevealed'; by: PlayerId; target: PlayerId; sealed: boolean }
   | { t: 'seized'; by: PlayerId; from: PlayerId; card: CardId }
+  /**
+   * 극장의 캐릭터 교환.
+   *
+   * 교환했다는 **사실만** 공개다 — 서로의 캐릭터를 확인하지 않고 바꾸므로
+   * (howto.md 극장), 어떤 캐릭터가 오갔는지는 호명될 때까지 아무도 모른다.
+   */
+  | { t: 'charactersSwapped'; by: PlayerId; partner: PlayerId }
   | { t: 'crownMoved'; to: PlayerId; reason: string }
   | { t: 'deckExhausted'; wanted: number; got: number }
   | { t: 'cityCompleted'; player: PlayerId; first: boolean }
@@ -82,4 +93,8 @@ export type BuildingEffect =
   /** 도적 소굴 — 건설비용을 카드로 지불 */
   | { kind: 'paidWithCards'; card: CardId; gold: number; cards: number }
   /** 골조·공동묘지 — 건물을 부수고 그 자리에 짓기 */
-  | { kind: 'sacrificed'; card: CardId; toBuild: CardId };
+  | { kind: 'sacrificed'; card: CardId; toBuild: CardId }
+  /** 금광 — 자원 얻기의 금화에 얹은 몫 */
+  | { kind: 'extraGold'; gold: number }
+  /** 박물관 — 아래에 카드를 깔았다 */
+  | { kind: 'tucked'; total: number };

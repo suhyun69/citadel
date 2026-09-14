@@ -45,9 +45,9 @@ export interface PromptMap {
     d: { options: readonly MainAction[] };
     c: { action: MainAction };
   };
-  /** 암살자 / 도둑의 캐릭터 지목 */
+  /** 암살자 / 도둑 / 마녀의 캐릭터 지목 */
   namedCharacter: {
-    d: { purpose: 'assassinate' | 'rob'; options: readonly CharacterId[] };
+    d: { purpose: 'assassinate' | 'rob' | 'bewitch'; options: readonly CharacterId[] };
     c: { characterId: CharacterId };
   };
   /** 마술사: 손패 통째 교환 or 원하는 만큼 버리고 같은 수 뽑기 */
@@ -81,9 +81,13 @@ export interface PromptMap {
     d: { builder: PlayerId; card: CardId };
     c: { seize: boolean };
   };
-  /** 마법사: 손패를 볼 상대 고르기 */
+  /**
+   * 상대 한 명 고르기. `purpose` 가 무엇을 위한 선택인지 말해준다 —
+   * 마법사는 손패를 볼 상대, 황제는 왕관을 줄 상대, 수도원장은 최고 부자가
+   * 여럿일 때 금화를 받아낼 상대다.
+   */
   pickPlayer: {
-    d: { purpose: 'wizardTake'; options: readonly PlayerId[] };
+    d: { purpose: 'wizardTake' | 'emperorCrown' | 'abbotTax'; options: readonly PlayerId[] };
     c: { player: PlayerId };
   };
   /** 마법사: 상대 손패에서 1장 가져오기 */
@@ -111,6 +115,51 @@ export interface PromptMap {
       options: readonly CardId[];
     };
     c: { sacrifice: CardId | null };
+  };
+  /** 박물관: 손에 든 카드 1장을 아래에 깔기 */
+  tuckCard: {
+    d: { options: readonly CardId[] };
+    c: { card: CardId };
+  };
+  /**
+   * 병기고: 자신을 부수며 함께 파괴할 건물 고르기.
+   *
+   * 8번 캐릭터의 능력이 아니므로 rank8Target 과 섞지 않는다 — 외성·주교의
+   * 면역도, 장성의 웃돈도 여기엔 걸리지 않는다(howto.md 병기고).
+   */
+  armoryTarget: {
+    d: { options: readonly { player: PlayerId; card: CardId }[] };
+    c: { target: { player: PlayerId; card: CardId } };
+  };
+  /** 극장: 선택 단계가 끝날 때 캐릭터를 바꿀 상대 (안 바꿔도 된다) */
+  theaterSwap: {
+    d: { options: readonly PlayerId[] };
+    c: { target: PlayerId | null };
+  };
+  /** 수도원장: 종교 건물 수만큼을 금화와 카드로 나눠 받기 */
+  abbotIncome: {
+    d: { total: number };
+    c: { gold: number; cards: number };
+  };
+  /** 황제: 새 왕관 주인에게서 금화 1닢과 카드 1장 중 무엇을 가져올지 */
+  emperorTribute: {
+    d: { from: PlayerId; canGold: boolean; canCard: boolean };
+    c: { take: 'gold' | 'card' };
+  };
+  /** 협박범: 협박 토큰 2개를 붙일 캐릭터 고르기 (하나만 꽃 자수) */
+  blackmailTokens: {
+    d: { options: readonly CharacterId[] };
+    c: { sealed: CharacterId; decoy: CharacterId };
+  };
+  /** 협박당한 플레이어: 금화 절반을 뇌물로 바칠지 */
+  bribe: {
+    d: { to: PlayerId; amount: number };
+    c: { pay: boolean };
+  };
+  /** 협박범: 뇌물을 안 받았다 — 토큰을 뒤집어 공개할지 (선택 사항) */
+  revealBlackmail: {
+    d: { target: PlayerId; character: CharacterId };
+    c: { reveal: boolean };
   };
   /** 도적 소굴: 건설비용을 금화/카드로 나눠 내기 */
   buildPayment: {

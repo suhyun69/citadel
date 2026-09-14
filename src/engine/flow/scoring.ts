@@ -6,7 +6,7 @@ import {
   type UniqueBuildingId,
 } from '@/data/types';
 import { makeScoreCtx } from '../effects/ctx';
-import { collectHookSources, collectHooks } from '../effects/registry';
+import { collectHookSources, collectHooks, handScoreSources } from '../effects/registry';
 import { cityCost } from '../rules/build';
 import { defOf, playerId, type CardId, type PlayerId } from '../state/ids';
 import type { CityEntry, GameState, MatchResult, PlayerScore } from '../state/game-state';
@@ -73,6 +73,10 @@ function scoreWith(state: GameState, player: PlayerId, wildcardAs: WildcardAs): 
   let uniqueBonus = 0;
   for (const h of collectHooks(state, player)) {
     if (h.endGameScore) uniqueBonus += h.endGameScore(ctx);
+  }
+  // 비밀 금고는 도시가 아니라 손에서 점수를 낸다 (howto.md 비밀 금고).
+  for (const s of handScoreSources(state, player)) {
+    uniqueBonus += s.hooks.endGameScoreInHand?.(ctx) ?? 0;
   }
 
   return {
@@ -164,6 +168,11 @@ export function explainScore(state: GameState, player: PlayerId): ScoreExplanati
         ? { kind: 'building', building: source.from.id, card: source.from.card, points }
         : { kind: 'character', character: source.from.id, points },
     );
+  }
+  for (const source of handScoreSources(state, player)) {
+    const points = source.hooks.endGameScoreInHand?.(ctx);
+    if (points === undefined || source.from.kind !== 'building') continue;
+    items.push({ kind: 'building', building: source.from.id, card: source.from.card, points });
   }
 
   return {

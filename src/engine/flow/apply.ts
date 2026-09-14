@@ -9,13 +9,22 @@ import {
   resolveWarrants,
   resolveTakeCard,
   resolveSacrificeBuild,
+  resolveTuckCard,
+  resolveArmoryTarget,
+  resolveTheaterSwap,
+  resolveAbbotIncome,
+  resolveBlackmailTokens,
+  resolveBribe,
+  resolveRevealBlackmail,
+  takeTribute,
   resolveDiscardCard,
   resolveMagicianMode,
   resolveNamedCharacter,
   resolveRank8Target,
 } from '../effects/resolvers';
 import type { GameState } from '../state/game-state';
-import type { CardId } from '../state/ids';
+import type { CardId, PlayerId } from '../state/ids';
+import type { CharacterId } from '@/data/types';
 import type { Choice, Prompt } from '../state/prompt';
 import { applySelectCharacter } from './selection';
 import { applyGatherMode, applyKeepDrawn, applyMainAction } from './turn';
@@ -46,7 +55,7 @@ export function applyApprovedChoice(state: GameState, prompt: Prompt, choice: Ch
       case 'namedCharacter':
         resolveNamedCharacter(
           s,
-          (prompt as { purpose: 'assassinate' | 'rob' }).purpose,
+          (prompt as { purpose: 'assassinate' | 'rob' | 'bewitch' }).purpose,
           choice.characterId,
         );
         return;
@@ -76,7 +85,12 @@ export function applyApprovedChoice(state: GameState, prompt: Prompt, choice: Ch
         resolveSeize(s, prompt.player, choice.seize);
         return;
       case 'pickPlayer':
-        resolvePickPlayer(s, prompt.player, choice.player);
+        resolvePickPlayer(
+          s,
+          prompt.player,
+          (prompt as { purpose: 'wizardTake' | 'emperorCrown' | 'abbotTax' }).purpose,
+          choice.player,
+        );
         return;
       case 'takeCard':
         resolveTakeCard(s, prompt.player, choice.card);
@@ -100,6 +114,36 @@ export function applyApprovedChoice(state: GameState, prompt: Prompt, choice: Ch
           (prompt as { cost: number }).cost,
           choice.sacrifice,
         );
+        return;
+      case 'abbotIncome':
+        resolveAbbotIncome(s, prompt.player, choice.gold, choice.cards);
+        return;
+      case 'emperorTribute':
+        takeTribute(s, prompt.player, choice.take);
+        return;
+      case 'blackmailTokens':
+        resolveBlackmailTokens(s, choice.sealed, choice.decoy);
+        return;
+      case 'bribe':
+        resolveBribe(s, prompt.player, choice.pay);
+        return;
+      case 'revealBlackmail':
+        resolveRevealBlackmail(
+          s,
+          prompt.player,
+          (prompt as { target: PlayerId }).target,
+          (prompt as { character: CharacterId }).character,
+          choice.reveal,
+        );
+        return;
+      case 'tuckCard':
+        resolveTuckCard(s, prompt.player, choice.card);
+        return;
+      case 'armoryTarget':
+        resolveArmoryTarget(s, prompt.player, choice.target);
+        return;
+      case 'theaterSwap':
+        resolveTheaterSwap(s, prompt.player, choice.target);
         return;
       case 'buildPayment':
         resolveBuildPayment(

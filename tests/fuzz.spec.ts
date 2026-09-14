@@ -104,3 +104,40 @@ describe('귀족이여 야망을 가져라', () => {
     }
   }, 120_000);
 });
+
+/**
+ * 첩자는 웃지 않는다.
+ *
+ * 이 조합은 앞의 둘이 건드리지 않는 자리를 민다 — 마녀가 남의 차례를 통째로
+ * 빼앗고, 협박범이 호명 직후에 끼어들며, 병기고가 두 채를 한꺼번에 부수고,
+ * 박물관이 카드를 도시 아래에 숨긴다. 특히 박물관은 68장 불변식이 세는
+ * 자리를 하나 늘리므로, 카드가 새는지 여기서 확인해야 한다.
+ */
+describe('첩자는 웃지 않는다', () => {
+  const SEEDS = Number(process.env['FUZZ_SEEDS'] ?? 40);
+
+  for (const playerCount of [4, 7] as const) {
+    it(`${playerCount}인 ${SEEDS}판이 불변식을 지키며 완주한다`, async () => {
+      for (let seed = 0; seed < SEEDS; seed++) {
+        const final = await playRandomGame({ seed, playerCount, presetId: 'spies' });
+        expect(checkInvariants(final.snapshot()), `seed=${seed}`).toEqual([]);
+        expect(final.phase(), `seed=${seed}`).toBe('finished');
+      }
+    }, 120_000);
+  }
+
+  it(`세리를 넣은 6인 ${SEEDS}판도 완주한다`, async () => {
+    for (let seed = 0; seed < SEEDS; seed++) {
+      const agents = new Map(
+        Array.from({ length: 6 }, (_, i) => [playerId(i), new HeuristicAgent(`h${i}`, seed * 100 + i)]),
+      );
+      const final = await runMatch(
+        createGame({ seed, playerCount: 6, presetId: 'spies', useRank9: true }),
+        agents,
+        { verifyInvariants: true },
+      );
+      expect(checkInvariants(final.snapshot()), `seed=${seed}`).toEqual([]);
+      expect(final.phase()).toBe('finished');
+    }
+  }, 120_000);
+});

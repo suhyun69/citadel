@@ -112,6 +112,12 @@ export function finishSelection(state: GameState): void {
   state.action = {
     rankCursor: 1,
     turn: null,
-    declared: { assassinTarget: null, thiefTarget: null, warrants: [] },
+    declared: {
+      assassinTarget: null,
+      thiefTarget: null,
+      warrants: [],
+      witchTarget: null,
+      blackmail: [],
+    },
   };
 }

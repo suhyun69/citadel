@@ -1,8 +1,11 @@
 import { produce, setAutoFreeze } from 'immer';
 import type { GameState } from '../state/game-state';
-import { callNextRank, endRound, finishTurn, maxRank } from './action';
+import { callNextRank, endRound, finishTurn, maxRank, runRoundEndHooks } from './action';
 import { finishScoring } from './scoring';
 import { finishSelection, selectionPrompt, startSelection } from './selection';
+import { theaterPrompt } from '../effects/buildings/theater';
+import { bribePrompt } from '../rules/blackmail';
+import { bewitchPrompt, isBewitched, startStolenTurn } from '../rules/witch';
 import { applyKeepDrawn, gatherPlan, gatherPrompt, keepDrawnPrompt, mainActionPrompt } from './turn';
 
 // 상태를 얼려 두면 실수로 draft 밖에서 변형하는 버그가 즉시 드러난다.
@@ -48,6 +51,17 @@ function advanceSelection(s: GameState): void {
     s.pending = selectionPrompt(s, sel);
     return;
   }
+
+  // 모두 고른 **뒤** 극장이 한 번 끼어든다 (howto.md 극장).
+  if (!sel.theaterDone) {
+    const ask = theaterPrompt(s);
+    if (ask) {
+      sel.theaterDone = true;
+      s.pending = ask;
+      return;
+    }
+  }
+
   finishSelection(s);
 }
 
@@ -56,7 +70,20 @@ function advanceAction(s: GameState): void {
   if (!a) throw new Error('행동 단계 상태가 없습니다');
 
   if (!a.turn) {
+    // 마법에 걸린 캐릭터의 차례가 방금 끝났다면, 순번을 넘기기 전에
+    // 마녀가 그 자리를 이어받는다 (howto.md:230).
+    if (a.witchPending) {
+      a.witchPending = false;
+      if (startStolenTurn(s)) return;
+    }
+
     if (a.rankCursor > maxRank(s)) {
+      // 훅을 먼저 돌리고 한 번 돌아온다. 황제처럼 여기서 묻는 카드가 있다.
+      if (!a.roundEndDone) {
+        a.roundEndDone = true;
+        runRoundEndHooks(s);
+        return;
+      }
       endRound(s);
       return;
     }
@@ -80,9 +107,31 @@ function advanceAction(s: GameState): void {
       s.pending = gatherPrompt(s, turn);
       return;
     }
-    case 'main':
+    case 'main': {
+      // 협박 대응이 가장 먼저다 — 캐릭터 능력도 건물 효과도 그 전에는
+      // 쓸 수 없다 (howto.md:270).
+      const bribe = bribePrompt(s, turn);
+      if (bribe) {
+        s.pending = bribe;
+        return;
+      }
+
+      // 마법에 걸린 캐릭터는 자원 얻기만 하고 즉시 차례를 마친다.
+      if (!turn.stolen && isBewitched(s, turn.playerId)) {
+        turn.stage = 'ending';
+        return;
+      }
+
+      // 마녀에게는 차례 메뉴가 열리지 않는다. 선언하고 멈추는 것이 전부다.
+      const bewitch = bewitchPrompt(s, turn);
+      if (bewitch) {
+        s.pending = bewitch;
+        return;
+      }
+
       s.pending = mainActionPrompt(s, turn);
       return;
+    }
     case 'ending':
       finishTurn(s);
       return;

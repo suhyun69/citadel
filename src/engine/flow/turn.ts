@@ -3,6 +3,7 @@ import { makeCtx } from '../effects/ctx';
 import { buildingsProviding, collectHooks } from '../effects/registry';
 import { canBuild, hasSameTitle, isBuildFree, isCityComplete, sacrificeOptions } from '../rules/build';
 import { canSeize } from '../rules/seizure';
+import { payPropertyTax } from '../rules/tax';
 import { draw, returnToBottom } from '../rules/deck';
 import type { MainAction, Prompt } from '../state/prompt';
 import { defIdOf, defOf, titleOf, type CardId, type PlayerId } from '../state/ids';
@@ -24,10 +25,12 @@ export interface GatherPlan {
 export function gatherPlan(state: GameState, player: PlayerId): GatherPlan {
   const ctx = makeCtx(state, player);
   let plan = { draw: GATHER_DRAW, keep: GATHER_KEEP };
+  let gold = GATHER_GOLD;
   for (const h of collectHooks(state, player)) {
     if (h.modifyGatherCards) plan = h.modifyGatherCards(plan, ctx);
+    if (h.modifyGatherGold) gold = h.modifyGatherGold(gold, ctx);
   }
-  return { gold: GATHER_GOLD, draw: plan.draw, keep: Math.min(plan.keep, plan.draw) };
+  return { gold, draw: plan.draw, keep: Math.min(plan.keep, plan.draw) };
 }
 
 export function buildLimitFor(state: GameState, player: PlayerId): number {
@@ -39,7 +42,12 @@ export function buildLimitFor(state: GameState, player: PlayerId): number {
   return Math.max(0, limit);
 }
 
-export function startTurn(state: GameState, player: PlayerId, characterId: import('@/data/types').CharacterId): void {
+export function startTurn(
+  state: GameState,
+  player: PlayerId,
+  characterId: import('@/data/types').CharacterId,
+  opts: { stolen?: boolean } = {},
+): void {
   const a = state.action;
   if (!a) throw new Error('행동 단계가 아닙니다');
 
@@ -54,6 +62,10 @@ export function startTurn(state: GameState, player: PlayerId, characterId: impor
     pendingSub: null,
     paidBuilds: 0,
     pendingSeizure: null,
+    buildGoldPaid: 0,
+    // 빼앗은 차례라는 표시는 차례 시작 훅보다 **먼저** 서 있어야 한다.
+    // 왕·대공이 그것을 보고 왕관을 가져가지 않는다(howto.md:232).
+    ...(opts.stolen ? { stolen: true } : {}),
   } satisfies TurnState;
 
   const ctx = makeCtx(state, player);
@@ -81,6 +93,18 @@ export function applyGatherMode(state: GameState, mode: 'gold' | 'cards'): void 
   if (mode === 'gold') {
     p.gold += plan.gold;
     state.log.push({ t: 'gained', player: turn.playerId, gold: plan.gold, reason: '자원얻기' });
+
+    // 금광 — 기본 2닢보다 많이 받았다면 누가 얹어줬는지 적는다
+    if (plan.gold > GATHER_GOLD) {
+      for (const b of buildingsProviding(state, turn.playerId, 'modifyGatherGold')) {
+        state.log.push({
+          t: 'buildingEffect',
+          player: turn.playerId,
+          building: b.id,
+          effect: { kind: 'extraGold', gold: plan.gold - GATHER_GOLD },
+        });
+      }
+    }
     turn.stage = 'main';
   } else {
     turn.drawn = draw(state, plan.draw);
@@ -132,23 +156,31 @@ export function mainActionOptions(state: GameState, turn: TurnState): MainAction
   if (!p) return [{ t: 'endTurn' }];
   const ctx = makeCtx(state, turn.playerId);
 
+  const hooks = collectHooks(state, turn.playerId);
   const options: MainAction[] = [];
-  const seenTitles = new Set<string>();
-  for (const card of p.hand) {
-    // 손에 같은 건물이 여러 장 있어도 선택지는 하나로 충분하다.
-    const defId = defIdOf(card);
-    if (seenTitles.has(defId)) continue;
-    if (canBuild(state, turn.playerId, card, ctx).ok) {
-      seenTitles.add(defId);
-      options.push({ t: 'build', card });
+
+  // 마녀와 마법에 걸린 캐릭터는 건설 행동 자체가 없다 (howto.md:226).
+  if (!hooks.some((h) => h.blocksBuild?.(ctx))) {
+    const seenTitles = new Set<string>();
+    for (const card of p.hand) {
+      // 손에 같은 건물이 여러 장 있어도 선택지는 하나로 충분하다.
+      const defId = defIdOf(card);
+      if (seenTitles.has(defId)) continue;
+      if (canBuild(state, turn.playerId, card, ctx).ok) {
+        seenTitles.add(defId);
+        options.push({ t: 'build', card });
+      }
     }
   }
 
-  for (const h of collectHooks(state, turn.playerId)) {
+  for (const h of hooks) {
     if (h.turnActions) options.push(...h.turnActions(ctx));
   }
 
-  options.push({ t: 'endTurn' });
+  // "반드시" 해야 할 일이 남아 있으면 차례를 끝낼 수 없다. 그런 훅은 대신
+  // 고를 행동을 항상 하나 내놓으므로, 여기서 메뉴가 비는 일은 없다.
+  const blocked = options.length > 0 && hooks.some((h) => h.blocksEndTurn?.(ctx));
+  if (!blocked) options.push({ t: 'endTurn' });
   return options;
 }
 
@@ -255,8 +287,13 @@ export function placeBuilding(
     (opts.countsTowardLimit ?? true) && !isBuildFree(state, player, defOf(card), makeCtx(state, player));
   if (turn && counts) turn.buildsUsed += 1;
   if (turn && gold > 0) turn.paidBuilds += 1;
+  // 연금술사가 돌려받는 몫. 대장간·재산세로 나간 금화는 여기 들어오지 않는다.
+  if (turn) turn.buildGoldPaid += gold;
 
   state.log.push({ t: 'built', player, card, paid: gold });
+
+  // 재산세는 건설이 끝난 **뒤** 남은 금화에서 낸다 (howto.md:440).
+  payPropertyTax(state, player);
   noteCompletion(state, player);
 }
 

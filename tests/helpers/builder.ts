@@ -125,7 +125,13 @@ export class GameBuilder {
     state.action = {
       rankCursor: turnRank,
       turn: null,
-      declared: { assassinTarget: null, thiefTarget: null, warrants: [] },
+      declared: {
+        assassinTarget: null,
+        thiefTarget: null,
+        warrants: [],
+        witchTarget: null,
+        blackmail: [],
+      },
     };
 
     if (this.#turn) {
@@ -142,6 +148,7 @@ export class GameBuilder {
         pendingSub: null,
         paidBuilds: 0,
         pendingSeizure: null,
+        buildGoldPaid: 0,
       };
     }
 

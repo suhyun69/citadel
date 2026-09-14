@@ -6,9 +6,9 @@ import type { GameState, MatchConfig } from '../state/game-state';
  * 개발 모드에서 매 step 마다 검사하는 불변식.
  *
  * 카드 총량 보존이 가장 강력한 그물이다. 기본 조합의 덱은 68장이고, 그
- * 68장은 언제나 더미·손패·도시·(자원 얻기로 뽑아 아직 고르지 않은 카드)
- * 넷 중 어딘가에 정확히 한 번 있어야 한다. 카드를 잃어버리거나 복제하는
- * 버그를 즉시 잡는다.
+ * 68장은 언제나 더미·손패·도시·박물관 아래·(자원 얻기로 뽑아 아직 고르지
+ * 않은 카드) 다섯 중 어딘가에 정확히 한 번 있어야 한다. 카드를 잃어버리거나
+ * 복제하는 버그를 즉시 잡는다.
  *
  * ⚠️ 금화 총량은 불변식이 아니다 — 은행 금화는 무제한이다(howto.md:107).
  */
@@ -38,7 +38,12 @@ export function checkInvariants(state: GameState): string[] {
   state.deck.forEach((c) => note(c, '더미'));
   for (const p of state.players) {
     p.hand.forEach((c) => note(c, `P${p.id} 손패`));
-    p.city.forEach((e) => note(e.card, `P${p.id} 도시`));
+    p.city.forEach((e) => {
+      note(e.card, `P${p.id} 도시`);
+      // 박물관 아래 깔린 카드도 판 위에 있는 카드다. 여기서 세지 않으면
+      // 박물관이 카드를 삼키는 것처럼 보인다.
+      e.beneath?.forEach((c) => note(c, `P${p.id} 박물관 아래`));
+    });
     if (p.gold < 0) problems.push(`P${p.id} 의 금화가 음수입니다 (${p.gold})`);
   }
   const drawn = state.action?.turn?.drawn;

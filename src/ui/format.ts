@@ -51,6 +51,10 @@ function buildingEffectText(effect: BuildingEffect): string {
       return `금화 ${effect.gold} + 카드 ${effect.cards}장으로 지불`;
     case 'sacrificed':
       return `${cardTitle(effect.card)} 을(를) 부수고 ${cardTitle(effect.toBuild)} 건설`;
+    case 'extraGold':
+      return `금화 +${effect.gold}`;
+    case 'tucked':
+      return `카드 1장을 아래로 (총 ${effect.total}장)`;
   }
 }
 
@@ -104,7 +108,7 @@ export function formatEvent(e: GameEvent): FormattedEvent | null {
     case 'declared':
       return {
         actor: e.by,
-        tag: e.purpose === 'assassinate' ? '암살' : '절도',
+        tag: e.purpose === 'assassinate' ? '암살' : e.purpose === 'rob' ? '절도' : '마법',
         detail: `→ ${characterName(e.target)}`,
         depth: 2,
         tone: 'bad',
@@ -170,6 +174,24 @@ export function formatEvent(e: GameEvent): FormattedEvent | null {
         tone: 'bad',
       };
 
+    case 'blackmailed':
+      return {
+        actor: e.by,
+        tag: '협박',
+        detail: `${e.characters.map(characterName).join(', ')} (둘 중 하나가 진짜)`,
+        depth: 2,
+        tone: 'bad',
+      };
+
+    case 'blackmailRevealed':
+      return {
+        actor: e.by,
+        tag: '협박 공개',
+        detail: e.sealed ? `P${e.target} — 꽃 자수였다` : `P${e.target} — 허풍이었다`,
+        depth: 2,
+        tone: e.sealed ? 'bad' : 'note',
+      };
+
     case 'seized':
       return {
         actor: e.by,
@@ -204,6 +226,15 @@ export function formatEvent(e: GameEvent): FormattedEvent | null {
         detail: `P${e.from} 에게서 금화 ${e.gold}닢`,
         depth: 2,
         tone: 'bad',
+      };
+
+    case 'charactersSwapped':
+      return {
+        actor: e.by,
+        tag: '극장 교환',
+        detail: `P${e.partner}와(과) 캐릭터를 바꿨다 (서로 확인하지 않음)`,
+        depth: 1,
+        tone: 'note',
       };
 
     case 'crownMoved':

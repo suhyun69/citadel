@@ -37,11 +37,23 @@ function abilityScore(view: PlayerView, ability: string): number {
     case 'bishop.income':
     case 'merchant.income':
     case 'warlord.income':
+    case 'emperor.income':
+    case 'abbot.income':
       // 수입은 건설 전에 받는 편이 낫다 — 방금 지은 건물 1채보다
       // 지금 못 짓는 건물을 짓게 되는 쪽이 크다.
       return 8;
     case 'warlord.destroy':
       return toGo(view) <= 2 ? 1 : 3.5;
+    // 남의 금고에서 나오는 공짜 금화. 수입만큼 이르게 챙긴다.
+    case 'abbot.tithe':
+    case 'tax_collector.collect':
+      return 8;
+    // 왕관을 넘기기 전에 할 일을 다 해 두는 편이 낫다 — 넘기는 순간
+    // 상대가 4번 수입의 발판을 얻는다. 그래도 "반드시" 라 언젠가는 쓴다.
+    case 'emperor.crown':
+      return 0.5;
+    case 'blackmailer.tokens':
+      return 7;
     case 'assassin.kill':
       return 7;
     case 'thief.rob':
@@ -102,6 +114,13 @@ export const normalPolicy: Policy = {
           if (target === 'bishop') return 5;
           return 3;
         }
+        if (d.purpose === 'bewitch') {
+          // 마녀는 능력을 통째로 빼앗는다 — 건설을 많이 하는 쪽이 가장 크다.
+          if (target === 'architect') return 10;
+          if (target === 'emperor') return 8;
+          if (target === 'warlord') return 6;
+          return 3;
+        }
         // 도둑: 금화를 많이 쥐고 있을 캐릭터를 노린다.
         if (target === 'merchant') return 10;
         if (target === 'king') return 8;
@@ -127,6 +146,40 @@ export const normalPolicy: Policy = {
 
       case 'discardCard':
         return candidate.type === 'discardCard' ? -cardValue(view, candidate.card) : undefined;
+
+      // 박물관 아래로는 가장 쓸모없는 카드를 넣는다 — 어차피 1장당 1점이다.
+      case 'tuckCard':
+        return candidate.type === 'tuckCard' ? -cardValue(view, candidate.card) : undefined;
+
+      case 'armoryTarget': {
+        if (candidate.type !== 'armoryTarget') return undefined;
+        if (candidate.target.player === view.me.id) return -5;
+        const leader = leaderId(view);
+        const def = defOf(candidate.target.card);
+        return (def.cost ?? 0) * 1.5 + (candidate.target.player === leader ? 4 : 0);
+      }
+
+      case 'emperorTribute':
+        // 카드 1장보다 확실한 금화 1닢.
+        return candidate.type === 'emperorTribute' && candidate.take === 'gold' ? 1 : 0;
+
+      case 'bribe': {
+        if (candidate.type !== 'bribe') return undefined;
+        // 절반을 뜯기느니 전부를 걸어본다 — 꽃 자수는 둘 중 하나뿐이다.
+        return candidate.pay ? (view.me.gold >= 6 ? 1 : 0) : 0.5;
+      }
+
+      case 'revealBlackmail':
+        // 공개는 공짜다. 허풍이었어도 잃는 것이 없다.
+        return candidate.type === 'revealBlackmail' && candidate.reveal ? 1 : 0;
+
+      case 'theaterSwap':
+        // 내 캐릭터를 보고 고른 것이라 바꾸면 손해인 쪽이 많다.
+        return candidate.type === 'theaterSwap' && candidate.target === null ? 1 : 0;
+
+      case 'abbotIncome':
+        // 금화가 카드보다 급하다 — 건설비용이 병목이다.
+        return candidate.type === 'abbotIncome' ? candidate.gold : undefined;
 
       default:
         return undefined;

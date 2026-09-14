@@ -18,6 +18,14 @@ export const PRESETS = {
     rank9: 'queen',
     uniques: ['capitol', 'factory', 'framework', 'great_wall', 'ghost_district', 'keep', 'graveyard', 'park', 'poor_house', 'quarry', 'school_of_magic', 'stables', 'statue', 'thieves_den'],
   },
+  spies: {
+    id: 'spies',
+    name: "첩자는 웃지 않는다",
+    description: "직접적인 공격 요소가 풍부하며, 별별 기상천외하고 괴상망측한 능력을 가득 담았다",
+    characters: ['witch', 'blackmailer', 'magician', 'emperor', 'abbot', 'alchemist', 'architect', 'warlord'],
+    rank9: 'tax_collector',
+    uniques: ['armory', 'basilica', 'dragon_gate', 'gold_mine', 'keep', 'monument', 'museum', 'graveyard', 'park', 'poor_house', 'quarry', 'secret_vault', 'smithy', 'theater'],
+  },
 } as const;
 
 export type PresetId = keyof typeof PRESETS;

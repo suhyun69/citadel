@@ -1,8 +1,9 @@
 import { buildingDef, isConstructible, type BuildingDef } from '@/data/types';
 import { BUILDING_EFFECTS, collectHooks } from '../effects/registry';
+import { makeCtx } from '../effects/ctx';
 import type { EffectCtx, GameHooks } from '../effects/hooks';
 import { defIdOf, defOf, type CardId, type PlayerId } from '../state/ids';
-import type { GameState } from '../state/game-state';
+import type { CityEntry, GameState } from '../state/game-state';
 
 /** 이 건물의 실제 건설비용 (공장 등 효과 반영). 음수로 내려가지 않는다. */
 export function buildCost(state: GameState, player: PlayerId, def: BuildingDef, ctx: EffectCtx): number {
@@ -73,6 +74,22 @@ export function isBuildFree(
   return collectHooks(state, player).some((h) => h.isBuildFree?.(def, ctx) === true);
 }
 
+/**
+ * 이 카드가 스스로 내건 건설 조건을 통과하는가 (기념물).
+ *
+ * 마구간·도적 소굴과 같은 이유로 **짓는 카드 자신의 정의**에서 훅을 꺼낸다 —
+ * 아직 손에 있어 도시 기준의 collectHooks 에는 잡히지 않는다.
+ */
+export function passesOwnBuildRule(
+  _state: GameState,
+  _player: PlayerId,
+  def: BuildingDef,
+  ctx: EffectCtx,
+): boolean {
+  const own = (BUILDING_EFFECTS as Record<string, GameHooks | undefined>)[def.id];
+  return own?.canBeBuilt?.(def, ctx) ?? true;
+}
+
 /** 공동묘지처럼 자기 건물 1채를 부숴 건설비용을 대신할 수 있는가. */
 export function sacrificeOptions(
   state: GameState,
@@ -90,7 +107,7 @@ export interface BuildCheck {
   cost: number;
   /** 0 보다 크면 건설 시 지불 방식을 물어야 한다. */
   maxCards: number;
-  reason?: 'notConstructible' | 'duplicate' | 'tooExpensive' | 'limitReached';
+  reason?: 'notConstructible' | 'duplicate' | 'tooExpensive' | 'limitReached' | 'ownRule';
 }
 
 export function canBuild(
@@ -111,6 +128,9 @@ export function canBuild(
   }
   if (hasSameTitle(state, player, def) && !allowsDuplicate(state, player, def, ctx)) {
     return { ok: false, cost: 0, maxCards: 0, reason: 'duplicate' };
+  }
+  if (!passesOwnBuildRule(state, player, def, ctx)) {
+    return { ok: false, cost: 0, maxCards: 0, reason: 'ownRule' };
   }
 
   const cost = buildCost(state, player, def, ctx);
@@ -133,5 +153,42 @@ export function cityCost(state: GameState, player: PlayerId): number {
   }, 0);
 }
 
-export const isCityComplete = (state: GameState, player: PlayerId): boolean =>
-  (state.players[player]?.city.length ?? 0) >= state.config.targetCitySize;
+/**
+ * 도시 완성 판정에 쓰는 건물 수.
+ *
+ * 보통은 도시에 놓인 카드 수 그대로지만, 기념물은 혼자 2채로 세어진다
+ * (howto.md 기념물). 점수의 건설비용 합과는 무관하다 — 그쪽은 카드 한 장의
+ * 값을 한 번만 더한다.
+ */
+export function citySize(
+  state: GameState,
+  player: PlayerId,
+  skip?: (entry: CityEntry) => boolean,
+): number {
+  const p = state.players[player];
+  if (!p) return 0;
+  const ctx = makeCtx(state, player);
+  const hooks = collectHooks(state, player);
+
+  return p.city.reduce((n, entry) => {
+    if (skip?.(entry)) return n;
+    for (const h of hooks) {
+      const w = h.citySizeWeight?.(entry, ctx);
+      if (w !== undefined) return n + w;
+    }
+    return n + 1;
+  }, 0);
+}
+
+/**
+ * 도시가 완성되었는가.
+ *
+ * `skip` 은 **아직 일어나지 않은 제거를 미리 반영**할 때 쓴다 — 병기고는
+ * 자신을 부수면서 능력을 쓰므로, 목표를 고르는 시점의 도시에는 이미 병기고가
+ * 없다.
+ */
+export const isCityComplete = (
+  state: GameState,
+  player: PlayerId,
+  skip?: (entry: CityEntry) => boolean,
+): boolean => citySize(state, player, skip) >= state.config.targetCitySize;

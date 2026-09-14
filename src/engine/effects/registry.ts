@@ -17,6 +17,12 @@ import { magician } from './characters/magician';
 import { merchant } from './characters/merchant';
 import { thief } from './characters/thief';
 import { warlord } from './characters/warlord';
+import { abbot } from './characters/abbot';
+import { alchemist } from './characters/alchemist';
+import { blackmailer } from './characters/blackmailer';
+import { emperor } from './characters/emperor';
+import { tax_collector } from './characters/tax_collector';
+import { witch } from './characters/witch';
 import { capitol } from './buildings/capitol';
 import { dragon_gate } from './buildings/dragon_gate';
 import { framework } from './buildings/framework';
@@ -38,6 +44,13 @@ import { smithy } from './buildings/smithy';
 import { statue } from './buildings/statue';
 import { thieves_den } from './buildings/thieves_den';
 import { wishing_well } from './buildings/wishing_well';
+import { armory } from './buildings/armory';
+import { basilica } from './buildings/basilica';
+import { gold_mine } from './buildings/gold_mine';
+import { monument } from './buildings/monument';
+import { museum } from './buildings/museum';
+import { secret_vault } from './buildings/secret_vault';
+import { theater } from './buildings/theater';
 
 /**
  * 구현된 카드 효과만 등록한다. `Partial<Record<…>>` 인 것이 중요하다 —
@@ -59,6 +72,12 @@ export const CHARACTER_EFFECTS: Partial<Record<CharacterId, GameHooks>> = {
   merchant,
   architect,
   warlord,
+  abbot,
+  alchemist,
+  blackmailer,
+  emperor,
+  tax_collector,
+  witch,
 };
 
 export const BUILDING_EFFECTS: Partial<Record<UniqueBuildingId, GameHooks>> = {
@@ -83,6 +102,13 @@ export const BUILDING_EFFECTS: Partial<Record<UniqueBuildingId, GameHooks>> = {
   statue,
   thieves_den,
   wishing_well,
+  armory,
+  basilica,
+  gold_mine,
+  monument,
+  museum,
+  secret_vault,
+  theater,
 };
 
 /**
@@ -110,8 +136,11 @@ export function collectHookSources(state: GameState, player: PlayerId): HookSour
   const out: HookSource[] = [];
 
   if (p.character) {
-    const hooks = CHARACTER_EFFECTS[p.character.characterId];
-    if (hooks) out.push({ hooks, owner: player, from: { kind: 'character', id: p.character.characterId } });
+    // 마녀가 남의 능력을 복사해 진행하는 동안에는 빌려온 캐릭터의 훅이 붙는다.
+    // 슬롯 자체는 그대로 마녀라, 호명과 지목은 영향을 받지 않는다(howto.md:230).
+    const acting = p.actingAs ?? p.character.characterId;
+    const hooks = CHARACTER_EFFECTS[acting];
+    if (hooks) out.push({ hooks, owner: player, from: { kind: 'character', id: acting } });
   }
 
   const fromCity: HookSource[] = [];
@@ -127,6 +156,27 @@ export function collectHookSources(state: GameState, player: PlayerId): HookSour
   });
 
   out.push(...fromCity);
+  return out;
+}
+
+/**
+ * **손에 든 채로** 점수를 주는 카드들 (비밀 금고).
+ *
+ * 점수 계산 전용이다. collectHookSources 에 섞으면 손패의 카드가 차례 중에
+ * 능력을 내놓게 되므로 절대 합치지 않는다.
+ */
+export function handScoreSources(state: GameState, player: PlayerId): HookSource[] {
+  const p = state.players[player];
+  if (!p) return [];
+
+  const out: HookSource[] = [];
+  for (const card of p.hand) {
+    const defId = defIdOf(card) as UniqueBuildingId;
+    const hooks = BUILDING_EFFECTS[defId];
+    if (hooks?.endGameScoreInHand) {
+      out.push({ hooks, owner: player, from: { kind: 'building', id: defId, card } });
+    }
+  }
   return out;
 }
 

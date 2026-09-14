@@ -27,6 +27,14 @@ export interface MatchConfig {
  */
 export interface CityEntry {
   card: CardId;
+  /**
+   * 박물관 아래 깔린 카드.
+   *
+   * 없을 때 `undefined` 로 두는 것이 중요하다 — 골든 해시는 최종 상태를
+   * JSON 으로 찍으므로, 박물관이 없는 조합에서 빈 배열이라도 들어가면
+   * 규칙이 바뀐 것처럼 보인다.
+   */
+  beneath?: CardId[];
 }
 
 export interface CharacterSlot {
@@ -50,6 +58,13 @@ export interface PlayerState {
   character: CharacterSlot | null;
   /** 도시를 완성한 라운드. null 이면 미완성. */
   cityCompletedAtRound: number | null;
+  /**
+   * 마녀가 남의 능력을 복사해 차례를 진행하는 동안만 채워진다.
+   *
+   * `character` 는 그대로 마녀다 — 호명과 지목은 여전히 마녀를 가리키고,
+   * 바뀌는 것은 **이 차례에 어떤 능력이 붙는가** 뿐이다(howto.md:230).
+   */
+  actingAs?: CharacterId;
 }
 
 export type Phase = 'selection' | 'action' | 'scoring' | 'finished';
@@ -64,6 +79,8 @@ export interface SelectionState {
   /** 왕관 주인부터 시계 방향 */
   order: PlayerId[];
   cursor: number;
+  /** 극장 주인에게 교환 여부를 이미 물었는가. */
+  theaterDone?: boolean;
 }
 
 export type TurnStage = 'gather' | 'main' | 'ending';
@@ -90,6 +107,21 @@ export interface TurnState {
   paidBuilds: number;
   /** 치안판사의 판단을 기다리며 멈춰 있는 건설. */
   pendingSeizure: { card: CardId; gold: number; cardsPaid: CardId[] } | null;
+  /**
+   * 이번 차례에 **건설비용으로** 낸 금화. 연금술사가 돌려받는 몫이며,
+   * 대장간이나 재산세로 나간 금화는 여기 들어오지 않는다(howto.md:362).
+   */
+  buildGoldPaid: number;
+  /** 마녀가 빼앗아 대신 진행하는 차례인가 (howto.md:230). */
+  stolen?: boolean;
+  /**
+   * 마녀가 선언하고 **멈춘** 차례인가.
+   *
+   * 멈춘 차례에는 차례 종료 효과가 붙지 않는다 — 공원·구빈원은 마녀가
+   * 이어받은 차례를 마칠 때 판정하고, 이어받지 못했다면 그 라운드에는
+   * 아예 발동하지 않는다(howto.md:456, 459).
+   */
+  suspended?: boolean;
 }
 
 export interface ActionPhaseState {
@@ -105,7 +137,18 @@ export interface ActionPhaseState {
      * 나머지 둘은 허풍이다 — 엔진은 읽지 않지만 기록해 둔다.
      */
     warrants: { character: CharacterId; sealed: boolean }[];
+    /** 마녀가 마법을 건 캐릭터. 그 차례가 오면 마녀가 이어받는다. */
+    witchTarget: CharacterId | null;
+    /**
+     * 협박범의 토큰. 인장(sealed)이 찍힌 하나만 실제 협박 대상이고 나머지는
+     * 허풍이다 — 영장과 달리 **둘** 뿐이다(howto.md:266).
+     */
+    blackmail: { character: CharacterId; sealed: boolean }[];
   };
+  /** 라운드 종료 훅을 이미 돌렸는가. 황제가 거기서 질문을 띄울 수 있어 필요하다. */
+  roundEndDone?: boolean;
+  /** 마법에 걸린 캐릭터의 차례가 방금 끝났다 — 다음은 마녀가 이어받는다. */
+  witchPending?: boolean;
 }
 
 export interface PlayerScore {
@@ -136,6 +179,11 @@ export interface GameState {
   /** null 이면 step() 으로 진행할 수 있다. 채워져 있으면 applyChoice() 를 기다린다. */
   pending: Prompt | null;
   log: GameEvent[];
+  /**
+   * 세리 토큰 위에 쌓인 재산세. **라운드를 넘겨 남는다**(howto.md:442) —
+   * 그래서 라운드마다 새로 만드는 ActionPhaseState 가 아니라 여기에 둔다.
+   */
+  taxPot?: number;
   /** 가장 먼저 도시를 완성한 플레이어 (4점) */
   firstCompleted: PlayerId | null;
   result: MatchResult | null;

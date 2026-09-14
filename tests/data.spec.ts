@@ -95,9 +95,18 @@ describe('프리셋 플레이 가능 여부', () => {
     expect(isPlayable(preset)).toBe(true);
   });
 
+  it('첩자는 웃지 않는다 조합도 카드 22종이 모두 구현되어 플레이할 수 있다', () => {
+    const preset = presetDef('spies');
+    expect(missingCards(preset)).toEqual({ characters: [], uniques: [] });
+    expect(isPlayable(preset)).toBe(true);
+  });
+
   it('createMatch 가 미구현 카드를 막는다', () => {
-    // 아직 효과가 없는 특수 건물을 억지로 끼운 프리셋
-    const broken = { ...presetDef('basic'), uniques: [...presetDef('basic').uniques, 'theater'] as never };
-    expect(missingCards(broken).uniques).toContain('theater');
+    // 아직 효과가 없는 특수 건물(천문대)을 억지로 끼운 프리셋
+    const broken = {
+      ...presetDef('basic'),
+      uniques: [...presetDef('basic').uniques, 'observatory'] as never,
+    };
+    expect(missingCards(broken).uniques).toContain('observatory');
   });
 });

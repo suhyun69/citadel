@@ -84,6 +84,63 @@ export function legalChoices(prompt: Prompt): Choice[] | null {
       return out;
     }
 
+    case 'tuckCard':
+      return prompt.options.map((card) => ({ type: 'tuckCard', card }));
+
+    case 'armoryTarget':
+      return prompt.options.map((o) => ({
+        type: 'armoryTarget',
+        target: { player: o.player, card: o.card },
+      }));
+
+    case 'theaterSwap': {
+      const out: Choice[] = prompt.options.map((target) => ({
+        type: 'theaterSwap' as const,
+        target,
+      }));
+      out.push({ type: 'theaterSwap', target: null });
+      return out;
+    }
+
+    case 'abbotIncome': {
+      // 금화와 카드로 나누는 방법은 total+1 가지뿐이라 전부 늘어놓는다.
+      const out: Choice[] = [];
+      for (let gold = 0; gold <= prompt.total; gold++) {
+        out.push({ type: 'abbotIncome', gold, cards: prompt.total - gold });
+      }
+      return out;
+    }
+
+    case 'emperorTribute': {
+      const out: Choice[] = [];
+      if (prompt.canGold) out.push({ type: 'emperorTribute', take: 'gold' });
+      if (prompt.canCard) out.push({ type: 'emperorTribute', take: 'card' });
+      return out;
+    }
+
+    case 'blackmailTokens': {
+      // 꽃 자수 1장 + 허풍 1장. 순서가 있는 쌍이다.
+      const out: Choice[] = [];
+      for (const sealed of prompt.options) {
+        for (const decoy of prompt.options) {
+          if (decoy !== sealed) out.push({ type: 'blackmailTokens', sealed, decoy });
+        }
+      }
+      return out;
+    }
+
+    case 'bribe':
+      return [
+        { type: 'bribe', pay: true },
+        { type: 'bribe', pay: false },
+      ];
+
+    case 'revealBlackmail':
+      return [
+        { type: 'revealBlackmail', reveal: true },
+        { type: 'revealBlackmail', reveal: false },
+      ];
+
     case 'magicianMode':
     case 'buildPayment':
       return null; // 부분집합 선택 — 열거하지 않는다

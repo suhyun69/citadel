@@ -14,6 +14,10 @@ export const king: GameHooks = {
   incomeKind: 'noble',
 
   onTurnStart(ctx) {
+    // 마녀가 빼앗은 차례라면 왕관은 움직이지 않는다. 마법에 걸려도 왕관은
+    // (마녀가 아니라) 왕 자신이 가져간다 — 그쪽은 본인 차례에 이미 챙겼다
+    // (howto.md:232).
+    if (ctx.turn?.stolen) return;
     if (ctx.state.crowned === ctx.self) return;
     ctx.state.crowned = ctx.self;
     ctx.push({ t: 'crownMoved', to: ctx.self, reason: '왕' });
